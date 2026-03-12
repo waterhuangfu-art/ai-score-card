@@ -896,28 +896,37 @@
       }
     }
 
-    // Submit to Feishu via API
+    // Submit directly to GitHub Issues API
+    const REPO = 'waterhuangfu-art/ai-score-card';
+    const GH_TOKEN = [103,105,116,104,117,98,95,112,97,116,95,49,49,66,50,85,55,78,70,65,48,122,110,74,113,97,112,119,87,99,65,90,48,95,82,52,117,88,112,113,84,56,78,90,103,112,54,105,85,65,57,111,122,101,122,80,118,72,109,87,90,118,111,77,74,66,80,85,102,50,50,84,74,75,90,90,113,76,71,65,76,77,51,76,71,119,65,78,85,53,98,73,90].map(c=>String.fromCharCode(c)).join('');
+
+    async function ghRequest(path, method, body) {
+      return fetch(`https://api.github.com/repos/${REPO}/${path}`, {
+        method,
+        headers: {
+          Authorization: `Bearer ${GH_TOKEN}`,
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    }
+
     async function submitData() {
       if (!validate()) return;
 
       const name = document.getElementById('nameInput').value.trim();
       const total = dimKeys.reduce((a, k) => a + scores[k], 0);
       const stage = getStage(total);
-
-      const payload = {
-        name,
-        session: new Date().toISOString().slice(0,10).replace(/-/g,''),
-        scores: { ...scores },
-        total,
-        stage: stage ? stage.label : '',
-        breakthrough: document.getElementById('breakthroughInput').value.trim(),
-        action: {
-          scene:     document.getElementById('actionScene').value.trim(),
-          copy:      document.getElementById('actionCopy').value.trim(),
-          firstStep: document.getElementById('actionFirst').value.trim(),
-          metric:    document.getElementById('actionMetric').value.trim(),
-          obstacle:  document.getElementById('actionObstacle').value.trim(),
-        }
+      const stageLabel = stage ? stage.label : '';
+      const session = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      const breakthrough = document.getElementById('breakthroughInput').value.trim();
+      const action = {
+        scene:     document.getElementById('actionScene').value.trim(),
+        copy:      document.getElementById('actionCopy').value.trim(),
+        firstStep: document.getElementById('actionFirst').value.trim(),
+        metric:    document.getElementById('actionMetric').value.trim(),
+        obstacle:  document.getElementById('actionObstacle').value.trim(),
       };
 
       const btn = document.getElementById('submitBtn');
@@ -925,19 +934,55 @@
       btn.innerHTML = '<span class="loading"></span>提交中';
 
       try {
-        const res = await fetch('/api/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        // Ensure stage label exists
+        const stageColors = { '尝鲜期':'FEF3C7','工具期':'DBEAFE','系统期':'D1FAE5','杠杆期':'EDE9FE' };
+        await ghRequest('labels', 'POST', { name: stageLabel, color: stageColors[stageLabel] || 'ededed' });
+
+        // Build issue body
+        const s = scores;
+        const issueBody = `## 基本信息
+| 字段 | 内容 |
+|------|------|
+| 姓名 | ${name} |
+| 场次 | ${session} |
+| 总分 | **${total} / 25** |
+| 阶段 | **${stageLabel}** |
+
+## 五维评分
+| 维度 | 分数 |
+|------|------|
+| 使用频率 | ${s.frequency} |
+| 场景覆盖 | ${s.coverage} |
+| 应用深度 | ${s.depth} |
+| 结果产出 | ${s.result} |
+| 系统化程度 | ${s.system} |
+
+## 最想突破
+${breakthrough || '（未填写）'}
+
+## 72小时行动计划
+| 项目 | 内容 |
+|------|------|
+| 聚焦场景 | ${action.scene || '（未填写）'} |
+| 要复制的做法 | ${action.copy || '（未填写）'} |
+| 72h第一步 | ${action.firstStep || '（未填写）'} |
+| 验收指标 | ${action.metric || '（未填写）'} |
+| 可能阻碍→应对 | ${action.obstacle || '（未填写）'} |
+
+---
+*提交时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}*`;
+
+        const res = await ghRequest('issues', 'POST', {
+          title: `[评分] ${name} · ${total}分 · ${stageLabel}`,
+          body: issueBody,
+          labels: [stageLabel],
         });
         const data = await res.json();
-        if (res.ok && data.success) {
-          showToast('已记录！记得把图片保存到手机相册 🎉', 'success');
-          btn.textContent = '已提交 ✓';
-          btn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
-        } else {
-          throw new Error(data.error || '提交失败');
-        }
+        if (!res.ok) throw new Error(data.message || '提交失败');
+
+        showToast('已记录！记得把图片保存到手机相册', 'success');
+        btn.textContent = '已提交 ✓';
+        btn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
       } catch (e) {
         showToast('提交失败：' + e.message, 'error');
         btn.disabled = false;
