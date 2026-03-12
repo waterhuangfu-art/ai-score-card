@@ -1,16 +1,7 @@
-// POST /api/submit — saves scoring record to Vercel KV (Upstash REST)
+// POST /api/submit — creates a GitHub Issue with scoring data
 
-const KV_URL   = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const REPO = 'waterhuangfu-art/ai-score-card';
 
-async function kv(method, ...args) {
-  const res = await fetch(`${KV_URL}/${method}/${args.map(encodeURIComponent).join('/')}`, {
-    headers: { Authorization: `Bearer ${KV_TOKEN}` },
-  });
-  return res.json();
-}
-
-// Simple rate limit (in-memory, resets on cold start — fine for ~10 participants)
 const ipTimes = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
@@ -20,6 +11,13 @@ function isRateLimited(ip) {
   times.push(now);
   ipTimes.set(ip, times);
   return false;
+}
+
+function stageOf(total) {
+  if (total <= 9)  return '尝鲜期';
+  if (total <= 14) return '工具期';
+  if (total <= 19) return '系统期';
+  return '杠杆期';
 }
 
 export default async function handler(req, res) {
@@ -36,25 +34,79 @@ export default async function handler(req, res) {
   try { payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
   catch { return res.status(400).json({ error: '请求格式错误' }); }
 
-  const { name, scores, total } = payload || {};
+  const { name, scores, total, stage, breakthrough, action, session } = payload || {};
   if (!name?.trim()) return res.status(400).json({ error: '姓名不能为空' });
-  if (typeof total !== 'number' || total < 0 || total > 25)
-    return res.status(400).json({ error: '评分数据不合法' });
 
-  if (!KV_URL || !KV_TOKEN) {
-    console.error('Missing KV env vars');
-    return res.status(500).json({ error: '服务器未配置存储，请联系管理员' });
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return res.status(500).json({ error: '服务器未配置，请联系管理员' });
+
+  const s = scores || {};
+  const issueTitle = `[评分] ${name} · ${total}分 · ${stage || stageOf(total)}`;
+  const issueBody = `## 基本信息
+| 字段 | 内容 |
+|------|------|
+| 姓名 | ${name} |
+| 场次 | ${session || '—'} |
+| 总分 | **${total} / 25** |
+| 阶段 | **${stage || stageOf(total)}** |
+
+## 五维评分
+| 维度 | 分数 |
+|------|------|
+| 使用频率 | ${s.frequency || '—'} |
+| 场景覆盖 | ${s.coverage || '—'} |
+| 应用深度 | ${s.depth || '—'} |
+| 结果产出 | ${s.result || '—'} |
+| 系统化程度 | ${s.system || '—'} |
+
+## 最想突破
+${breakthrough || '（未填写）'}
+
+## 72小时行动计划
+| 项目 | 内容 |
+|------|------|
+| 聚焦场景 | ${action?.scene || '（未填写）'} |
+| 要复制的做法 | ${action?.copy || '（未填写）'} |
+| 72h第一步 | ${action?.firstStep || '（未填写）'} |
+| 验收指标 | ${action?.metric || '（未填写）'} |
+| 可能阻碍→应对 | ${action?.obstacle || '（未填写）'} |
+
+---
+*提交时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}*`;
+
+  // Labels: stage + session
+  const labels = [stage || stageOf(total)];
+  if (session) labels.push(session);
+
+  try {
+    // Ensure labels exist first (ignore errors)
+    const stageColors = { '尝鲜期': 'FEF3C7', '工具期': 'DBEAFE', '系统期': 'D1FAE5', '杠杆期': 'EDE9FE' };
+    const stageLabel = stage || stageOf(total);
+    await fetch(`https://api.github.com/repos/${REPO}/labels`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: JSON.stringify({ name: stageLabel, color: stageColors[stageLabel] || 'ededed' }),
+    });
+    if (session) {
+      await fetch(`https://api.github.com/repos/${REPO}/labels`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
+        body: JSON.stringify({ name: session, color: '0075ca' }),
+      });
+    }
+
+    // Create issue
+    const issueRes = await fetch(`https://api.github.com/repos/${REPO}/issues`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: JSON.stringify({ title: issueTitle, body: issueBody, labels }),
+    });
+    const issue = await issueRes.json();
+    if (!issueRes.ok) throw new Error(issue.message || '创建失败');
+
+    return res.status(200).json({ success: true, issueNumber: issue.number });
+  } catch (err) {
+    console.error('GitHub API error:', err.message);
+    return res.status(500).json({ error: '提交失败，请重试' });
   }
-
-  const record = {
-    id: Date.now(),
-    submittedAt: new Date().toISOString(),
-    ...payload,
-  };
-
-  // Push JSON record into a Redis list keyed by session
-  const listKey = `submissions:${payload.session || 'default'}`;
-  await kv('rpush', listKey, JSON.stringify(record));
-
-  return res.status(200).json({ success: true });
 }
