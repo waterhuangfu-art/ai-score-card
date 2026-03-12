@@ -459,16 +459,17 @@
       width: 16px;
       text-align: right;
     }
-    .export-card .ec-breakthrough {
+    .export-card .ec-section {
       background: rgba(255,255,255,0.12);
       border-radius: 12px;
       padding: 14px 16px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
-    .export-card .ec-bt-label {
+    .export-card .ec-section-title {
       font-size: 11px;
       color: rgba(255,255,255,0.6);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
     .export-card .ec-bt-text {
       font-size: 14px;
@@ -476,10 +477,30 @@
       font-weight: 500;
       line-height: 1.5;
     }
+    .export-card .ec-action-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+    .export-card .ec-action-row:last-child { margin-bottom: 0; }
+    .export-card .ec-action-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+      padding-top: 1px;
+      min-width: 60px;
+    }
+    .export-card .ec-action-val {
+      font-size: 13px;
+      color: white;
+      line-height: 1.5;
+    }
     .export-card .ec-footer {
       font-size: 11px;
       color: rgba(255,255,255,0.5);
       text-align: center;
+      margin-top: 4px;
     }
 
     /* Loading spinner */
@@ -738,9 +759,32 @@
         <div class="ec-dim-val" id="ecv-system">-</div>
       </div>
     </div>
-    <div class="ec-breakthrough" id="ec-breakthrough" style="display:none">
-      <div class="ec-bt-label">最想突破的是</div>
+    <div class="ec-section" id="ec-breakthrough" style="display:none">
+      <div class="ec-section-title">最想突破的是</div>
       <div class="ec-bt-text" id="ec-bt-text"></div>
+    </div>
+    <div class="ec-section" id="ec-action" style="display:none">
+      <div class="ec-section-title">72小时行动计划</div>
+      <div class="ec-action-row" id="ec-row-scene" style="display:none">
+        <div class="ec-action-label">聚焦场景</div>
+        <div class="ec-action-val" id="ec-scene"></div>
+      </div>
+      <div class="ec-action-row" id="ec-row-copy" style="display:none">
+        <div class="ec-action-label">复制做法</div>
+        <div class="ec-action-val" id="ec-copy"></div>
+      </div>
+      <div class="ec-action-row" id="ec-row-first" style="display:none">
+        <div class="ec-action-label">第一步</div>
+        <div class="ec-action-val" id="ec-first"></div>
+      </div>
+      <div class="ec-action-row" id="ec-row-metric" style="display:none">
+        <div class="ec-action-label">验收指标</div>
+        <div class="ec-action-val" id="ec-metric"></div>
+      </div>
+      <div class="ec-action-row" id="ec-row-obstacle" style="display:none">
+        <div class="ec-action-label">阻碍→应对</div>
+        <div class="ec-action-val" id="ec-obstacle"></div>
+      </div>
     </div>
     <div class="ec-footer">你的AI含量有多少？· 创业下午茶</div>
   </div>
@@ -856,6 +900,7 @@
         document.getElementById('ecv-' + k).textContent = v;
       });
 
+      // Breakthrough
       const btEl = document.getElementById('ec-breakthrough');
       if (bt) {
         document.getElementById('ec-bt-text').textContent = bt;
@@ -863,6 +908,27 @@
       } else {
         btEl.style.display = 'none';
       }
+
+      // Action plan — show each row only if filled
+      const actionFields = [
+        { rowId: 'ec-row-scene',    valId: 'ec-scene',    val: document.getElementById('actionScene').value.trim() },
+        { rowId: 'ec-row-copy',     valId: 'ec-copy',     val: document.getElementById('actionCopy').value.trim() },
+        { rowId: 'ec-row-first',    valId: 'ec-first',    val: document.getElementById('actionFirst').value.trim() },
+        { rowId: 'ec-row-metric',   valId: 'ec-metric',   val: document.getElementById('actionMetric').value.trim() },
+        { rowId: 'ec-row-obstacle', valId: 'ec-obstacle', val: document.getElementById('actionObstacle').value.trim() },
+      ];
+      let anyAction = false;
+      actionFields.forEach(f => {
+        const rowEl = document.getElementById(f.rowId);
+        if (f.val) {
+          document.getElementById(f.valId).textContent = f.val;
+          rowEl.style.display = 'flex';
+          anyAction = true;
+        } else {
+          rowEl.style.display = 'none';
+        }
+      });
+      document.getElementById('ec-action').style.display = anyAction ? 'block' : 'none';
 
       const btn = document.getElementById('exportBtn');
       btn.disabled = true;
