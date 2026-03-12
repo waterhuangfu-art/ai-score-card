@@ -7,246 +7,523 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --primary: #4F46E5;
+      --primary: #4F46E5; --primary-light: #EEF2FF;
       --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
       --gray-400: #9CA3AF; --gray-600: #4B5563; --gray-800: #1F2937;
+      --success: #10B981; --danger: #EF4444;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
       background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
 
     /* Toolbar */
     .toolbar { background: white; border-bottom: 1px solid var(--gray-200);
-      padding: 14px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .toolbar h1 { font-size: 17px; font-weight: 700; flex: 1; min-width: 160px; }
-    .session-input { padding: 7px 12px; border: 1.5px solid var(--gray-200);
-      border-radius: 8px; font-size: 14px; outline: none; width: 140px; font-family: inherit; }
-    .session-input:focus { border-color: var(--primary); }
-    .refresh-btn { padding: 7px 16px; background: var(--primary); color: white;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: inherit; }
-    .gh-link { font-size: 13px; color: var(--primary); text-decoration: none;
-      padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; }
+      padding: 12px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .toolbar h1 { font-size: 16px; font-weight: 700; flex: 1; min-width: 140px; }
+    .toolbar input { padding: 7px 11px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+    .toolbar input:focus { border-color: var(--primary); }
+    #tokenInput { width: 200px; letter-spacing: 1px; }
+    #sessionInput { width: 120px; }
+    .btn-sm { padding: 7px 14px; border: none; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+    .btn-sm:active { opacity: 0.8; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-ghost { background: var(--gray-100); color: var(--gray-600); }
     .count-badge { background: var(--gray-100); color: var(--gray-600);
-      padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+      padding: 4px 11px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
 
     /* Stats */
-    .stats-row { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
-    .stat-card { background: white; border-radius: 10px; padding: 14px 18px;
-      flex: 1; min-width: 110px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .stat-label { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
-    .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
-    .stat-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .stats-row { display: flex; gap: 10px; padding: 14px 20px; flex-wrap: wrap; }
+    .stat-card { background: white; border-radius: 10px; padding: 12px 16px;
+      flex: 1; min-width: 100px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-label { font-size: 11px; color: var(--gray-400); margin-bottom: 3px; }
+    .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); }
+    .stat-sub { font-size: 10px; color: var(--gray-400); margin-top: 1px; }
 
     /* Stage chips */
-    .stage-row { display: flex; gap: 8px; padding: 0 24px 16px; flex-wrap: wrap; }
-    .stage-chip { display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-    .s1 { background: #FEF3C7; color: #92400E; }
-    .s2 { background: #DBEAFE; color: #1E40AF; }
-    .s3 { background: #D1FAE5; color: #065F46; }
-    .s4 { background: #EDE9FE; color: #5B21B6; }
+    .stage-row { display: flex; gap: 8px; padding: 0 20px 14px; flex-wrap: wrap; }
+    .stage-chip { display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .s1{background:#FEF3C7;color:#92400E} .s2{background:#DBEAFE;color:#1E40AF}
+    .s3{background:#D1FAE5;color:#065F46} .s4{background:#EDE9FE;color:#5B21B6}
 
-    /* Table */
-    .table-wrap { padding: 0 24px 32px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: white;
-      border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 14px; }
-    thead { background: var(--gray-50); }
-    th { padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600;
-      color: var(--gray-600); white-space: nowrap; border-bottom: 1px solid var(--gray-200); }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--gray-50); }
+    /* Records list */
+    .records { padding: 0 20px 40px; }
 
-    .name-cell { font-weight: 600; }
-    .name-link { color: var(--gray-800); text-decoration: none; }
-    .name-link:hover { color: var(--primary); }
-    .score-cell { font-weight: 800; color: var(--primary); font-size: 18px; }
-    .dim-scores { display: flex; gap: 4px; }
-    .dim-score { width: 24px; height: 24px; display: flex; align-items: center;
-      justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 700; }
-    .ds-1 { background: #FEE2E2; color: #991B1B; }
-    .ds-2 { background: #FEF3C7; color: #92400E; }
-    .ds-3 { background: #DBEAFE; color: #1E40AF; }
-    .ds-4 { background: #D1FAE5; color: #065F46; }
-    .ds-5 { background: #EDE9FE; color: #5B21B6; }
-    .ds-0 { background: var(--gray-100); color: var(--gray-400); }
-    .bt-text { color: var(--gray-600); font-size: 13px; max-width: 180px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .time-cell { color: var(--gray-400); font-size: 12px; white-space: nowrap; }
+    .record-card { background: white; border-radius: 12px; margin-bottom: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
 
+    /* Main row */
+    .record-main { display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; cursor: pointer; }
+    .record-main:hover { background: var(--gray-50); }
+    .rec-name { font-weight: 700; font-size: 15px; min-width: 60px; }
+    .rec-score { font-size: 22px; font-weight: 900; color: var(--primary); min-width: 32px; }
+    .rec-stage { flex-shrink: 0; }
+    .rec-dims { display: flex; gap: 3px; flex-shrink: 0; }
+    .dim-dot { width: 22px; height: 22px; display: flex; align-items: center;
+      justify-content: center; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .dd1{background:#FEE2E2;color:#991B1B} .dd2{background:#FEF3C7;color:#92400E}
+    .dd3{background:#DBEAFE;color:#1E40AF} .dd4{background:#D1FAE5;color:#065F46}
+    .dd5{background:#EDE9FE;color:#5B21B6} .dd0{background:#F3F4F6;color:#9CA3AF}
+    .rec-time { font-size: 11px; color: var(--gray-400); white-space: nowrap; margin-left: auto; }
+    .rec-chevron { color: var(--gray-400); font-size: 12px; transition: transform 0.2s; flex-shrink: 0; }
+    .record-card.open .rec-chevron { transform: rotate(180deg); }
+
+    /* Detail section */
+    .record-detail { display: none; border-top: 1px solid var(--gray-100);
+      padding: 16px; background: var(--gray-50); }
+    .record-card.open .record-detail { display: block; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    @media (max-width: 500px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-field { background: white; border-radius: 8px; padding: 10px 12px; }
+    .detail-field.full { grid-column: 1 / -1; }
+    .detail-label { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+    .detail-val { font-size: 13px; color: var(--gray-800); line-height: 1.5; }
+    .detail-val.empty { color: var(--gray-400); font-style: italic; }
+
+    .detail-actions { display: flex; gap: 8px; }
+
+    /* Dim labels */
+    .dim-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .dim-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--gray-600); }
+
+    /* Edit modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; width: 100%; max-width: 520px;
+      max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 17px; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer;
+      color: var(--gray-400); line-height: 1; padding: 0 4px; }
+    .modal-body { padding: 16px 20px 20px; }
+    .modal-section { font-size: 12px; font-weight: 600; color: var(--gray-400);
+      text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+    .modal-section:first-child { margin-top: 0; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-600);
+      margin-bottom: 5px; }
+    .modal-input, .modal-textarea { width: 100%; padding: 9px 12px; font-size: 14px;
+      border: 1.5px solid var(--gray-200); border-radius: 8px; outline: none;
+      font-family: inherit; color: var(--gray-800); transition: border-color 0.2s; }
+    .modal-input:focus, .modal-textarea:focus { border-color: var(--primary); }
+    .modal-textarea { resize: none; }
+    .score-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .score-row label { font-size: 13px; font-weight: 500; color: var(--gray-600); width: 72px; flex-shrink: 0; }
+    .score-btns { display: flex; gap: 6px; }
+    .score-btn { width: 32px; height: 32px; border: 1.5px solid var(--gray-200);
+      border-radius: 7px; background: white; font-size: 14px; font-weight: 600;
+      color: var(--gray-400); cursor: pointer; transition: all 0.15s; }
+    .score-btn.sel { background: var(--primary); border-color: var(--primary); color: white; }
+    .modal-footer { display: flex; gap: 10px; padding: 0 20px 20px; }
+    .btn-save { flex: 1; padding: 12px; background: linear-gradient(135deg,#4F46E5,#7C3AED);
+      color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; }
+    .btn-cancel { padding: 12px 18px; background: var(--gray-100); color: var(--gray-600);
+      border: none; border-radius: 10px; font-size: 15px; cursor: pointer; font-family: inherit; }
+
+    /* State */
     .state-box { text-align: center; padding: 60px 20px; color: var(--gray-400); }
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner { display: inline-block; width: 24px; height: 24px;
       border: 3px solid var(--gray-200); border-top-color: var(--primary);
       border-radius: 50%; animation: spin 0.6s linear infinite; margin-bottom: 10px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px);
+      background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 30px;
+      font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 200; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.ok { background: var(--success); }
+    .toast.err { background: var(--danger); }
   </style>
 </head>
 <body>
 
-  <div class="toolbar">
-    <h1>AI含量评分 · 后台数据</h1>
-    <input class="session-input" id="sessionInput" type="text" placeholder="场次标签（选填）" />
-    <button class="refresh-btn" onclick="loadData()">刷新</button>
-    <a class="gh-link" href="https://github.com/waterhuangfu-art/ai-score-card/issues" target="_blank">GitHub Issues →</a>
-    <span class="count-badge" id="countBadge">加载中…</span>
+<div class="toolbar">
+  <h1>AI含量评分 · 后台</h1>
+  <input id="tokenInput" type="password" placeholder="粘贴管理 Token" />
+  <input id="sessionInput" type="text" placeholder="场次（选填）" />
+  <button class="btn-sm btn-primary" onclick="loadData()">刷新</button>
+  <button class="btn-sm btn-ghost" onclick="window.open('https://github.com/waterhuangfu-art/ai-score-card/issues','_blank')">GitHub Issues</button>
+  <span class="count-badge" id="countBadge">—</span>
+</div>
+
+<div class="stats-row" id="statsRow" style="display:none">
+  <div class="stat-card"><div class="stat-label">平均总分</div><div class="stat-val" id="statAvg">—</div><div class="stat-sub">满分 25</div></div>
+  <div class="stat-card"><div class="stat-label">最高分</div><div class="stat-val" id="statMax">—</div></div>
+  <div class="stat-card"><div class="stat-label">最低分</div><div class="stat-val" id="statMin">—</div></div>
+  <div class="stat-card"><div class="stat-label">人数</div><div class="stat-val" id="statCount">—</div></div>
+</div>
+<div class="stage-row" id="stageRow" style="display:none"></div>
+
+<div class="records" id="recordsWrap">
+  <div class="state-box" id="stateBox">输入 Token 后点刷新加载数据</div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">编辑记录</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">基本信息</div>
+      <div class="modal-field">
+        <label class="modal-label">姓名</label>
+        <input class="modal-input" id="m-name" type="text" />
+      </div>
+
+      <div class="modal-section">五维评分</div>
+      <div id="m-scores">
+        <div class="score-row"><label>使用频率</label><div class="score-btns" data-dim="frequency"></div></div>
+        <div class="score-row"><label>场景覆盖</label><div class="score-btns" data-dim="coverage"></div></div>
+        <div class="score-row"><label>应用深度</label><div class="score-btns" data-dim="depth"></div></div>
+        <div class="score-row"><label>结果产出</label><div class="score-btns" data-dim="result"></div></div>
+        <div class="score-row"><label>系统化程度</label><div class="score-btns" data-dim="system"></div></div>
+      </div>
+
+      <div class="modal-section">最想突破</div>
+      <div class="modal-field">
+        <textarea class="modal-textarea" id="m-breakthrough" rows="2"></textarea>
+      </div>
+
+      <div class="modal-section">72小时行动计划</div>
+      <div class="modal-field">
+        <label class="modal-label">聚焦场景</label>
+        <textarea class="modal-textarea" id="m-scene" rows="2"></textarea>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">要复制的做法</label>
+        <textarea class="modal-textarea" id="m-copy" rows="2"></textarea>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">72h第一步</label>
+        <textarea class="modal-textarea" id="m-first" rows="2"></textarea>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">验收指标</label>
+        <textarea class="modal-textarea" id="m-metric" rows="2"></textarea>
+      </div>
+      <div class="modal-field" style="margin-bottom:0">
+        <label class="modal-label">可能阻碍→应对方案</label>
+        <textarea class="modal-textarea" id="m-obstacle" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" id="saveBtn" onclick="saveRecord()">保存</button>
+    </div>
   </div>
+</div>
 
-  <div class="stats-row" id="statsRow" style="display:none">
-    <div class="stat-card">
-      <div class="stat-label">平均总分</div>
-      <div class="stat-val" id="statAvg">—</div>
-      <div class="stat-sub">满分 25 分</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">最高分</div>
-      <div class="stat-val" id="statMax">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">最低分</div>
-      <div class="stat-val" id="statMin">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">参与人数</div>
-      <div class="stat-val" id="statCount">—</div>
-    </div>
-  </div>
+<div class="toast" id="toast"></div>
 
-  <div class="stage-row" id="stageRow" style="display:none"></div>
+<script>
+  const REPO = 'waterhuangfu-art/ai-score-card';
+  const stageMap = { '尝鲜期':'s1','工具期':'s2','系统期':'s3','杠杆期':'s4' };
+  const dimKeys = ['frequency','coverage','depth','result','system'];
+  const dimNames = ['使用频率','场景覆盖','应用深度','结果产出','系统化程度'];
+  let editingIssue = null;
+  let editScores = { frequency:0, coverage:0, depth:0, result:0, system:0 };
 
-  <div class="table-wrap">
-    <div class="state-box" id="stateBox">
-      <div class="spinner"></div><br>加载中…
-    </div>
-    <table id="dataTable" style="display:none">
-      <thead>
-        <tr>
-          <th>姓名</th>
-          <th>总分</th>
-          <th>阶段</th>
-          <th>五维 <span style="font-weight:400;color:#9CA3AF;font-size:11px">频·覆·深·果·系</span></th>
-          <th>最想突破</th>
-          <th>72h第一步</th>
-          <th>提交时间</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
-
-  <script>
-    const REPO = 'waterhuangfu-art/ai-score-card';
-
-    const stageMap = { '尝鲜期':'s1', '工具期':'s2', '系统期':'s3', '杠杆期':'s4' };
-
-    function parseIssue(issue) {
-      const body = issue.body || '';
-      const get = (label) => {
-        const re = new RegExp(`\\|\\s*${label}\\s*\\|\\s*(.+?)\\s*\\|`);
-        const m = body.match(re);
-        return m ? m[1].replace(/\*\*/g,'').trim() : '';
+  // Init score buttons in modal
+  document.querySelectorAll('.score-btns').forEach(wrap => {
+    for (let v = 1; v <= 5; v++) {
+      const btn = document.createElement('button');
+      btn.className = 'score-btn';
+      btn.textContent = v;
+      btn.dataset.val = v;
+      btn.onclick = () => {
+        const dim = wrap.dataset.dim;
+        editScores[dim] = v;
+        wrap.querySelectorAll('.score-btn').forEach(b => b.classList.toggle('sel', parseInt(b.dataset.val) === v));
       };
-      return {
-        number: issue.number,
-        url: issue.html_url,
-        name: get('姓名'),
-        total: parseInt(get('总分')) || 0,
-        stage: get('阶段'),
-        frequency: parseInt(get('使用频率')) || 0,
-        coverage: parseInt(get('场景覆盖')) || 0,
-        depth: parseInt(get('应用深度')) || 0,
-        result: parseInt(get('结果产出')) || 0,
-        system: parseInt(get('系统化程度')) || 0,
-        breakthrough: get('最想突破') === '（未填写）' ? '' : get('最想突破'),
-        firstStep: get('72h第一步') === '（未填写）' ? '' : get('72h第一步'),
-        createdAt: issue.created_at,
-      };
+      wrap.appendChild(btn);
     }
+  });
 
-    function fmtTime(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    }
+  function getToken() { return document.getElementById('tokenInput').value.trim(); }
 
-    function esc(s) {
-      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+  function showToast(msg, type='') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (type ? ' '+type : '');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = 'toast'; }, 3000);
+  }
 
-    async function loadData() {
-      document.getElementById('stateBox').innerHTML = '<div class="spinner"></div><br>加载中…';
+  // Parse issue body table rows
+  function parseField(body, label) {
+    const re = new RegExp(`\\|\\s*${label}\\s*\\|\\s*([^|\\n]+?)\\s*\\|`);
+    const m = body.match(re);
+    if (!m) return '';
+    return m[1].replace(/\*\*/g,'').trim().replace(/^（未填写）$/, '');
+  }
+
+  function parseRecord(issue) {
+    const body = issue.body || '';
+    const total = parseInt(parseField(body, '总分').replace(/\s*\/.*/, '')) || 0;
+    return {
+      number: issue.number,
+      url: issue.html_url,
+      body,
+      name:        parseField(body, '姓名'),
+      session:     parseField(body, '场次'),
+      total,
+      stage:       parseField(body, '阶段'),
+      frequency:   parseInt(parseField(body, '使用频率')) || 0,
+      coverage:    parseInt(parseField(body, '场景覆盖')) || 0,
+      depth:       parseInt(parseField(body, '应用深度')) || 0,
+      result:      parseInt(parseField(body, '结果产出')) || 0,
+      system:      parseInt(parseField(body, '系统化程度')) || 0,
+      breakthrough: parseField(body, '最想突破') || (body.match(/## 最想突破\n([^\n#]+)/) || [])[1]?.trim() || '',
+      scene:       parseField(body, '聚焦场景'),
+      copy:        parseField(body, '要复制的做法'),
+      firstStep:   parseField(body, '72h第一步'),
+      metric:      parseField(body, '验收指标'),
+      obstacle:    parseField(body, '可能阻碍→应对'),
+      createdAt:   issue.created_at,
+    };
+  }
+
+  function stageOf(total) {
+    if (total <= 9) return '尝鲜期';
+    if (total <= 14) return '工具期';
+    if (total <= 19) return '系统期';
+    return '杠杆期';
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderField(label, val) {
+    const isEmpty = !val || val === '（未填写）';
+    return `<div class="detail-field">
+      <div class="detail-label">${label}</div>
+      <div class="detail-val${isEmpty?' empty':''}">${isEmpty ? '未填写' : esc(val)}</div>
+    </div>`;
+  }
+
+  async function loadData() {
+    document.getElementById('stateBox').style.display = 'block';
+    document.getElementById('stateBox').innerHTML = '<div class="spinner"></div><br>加载中…';
+    document.getElementById('statsRow').style.display = 'none';
+    document.getElementById('stageRow').style.display = 'none';
+    document.getElementById('recordsWrap').querySelectorAll('.record-card').forEach(e => e.remove());
+
+    const session = document.getElementById('sessionInput').value.trim();
+    const labelParam = session ? `&labels=${encodeURIComponent(session)}` : '';
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    const token = getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO}/issues?state=open&per_page=100${labelParam}`, { headers });
+      if (!res.ok) throw new Error('GitHub API ' + res.status + (res.status === 401 ? '：Token 无效' : ''));
+      const issues = await res.json();
+      const records = issues.filter(i => i.title.startsWith('[评分]')).map(parseRecord);
+
+      document.getElementById('countBadge').textContent = `${records.length} 条`;
+      document.getElementById('stateBox').style.display = records.length ? 'none' : 'block';
+      if (!records.length) { document.getElementById('stateBox').innerHTML = '暂无数据'; return; }
+
+      // Stats
+      const totals = records.map(r => r.total);
+      document.getElementById('statAvg').textContent = (totals.reduce((a,b)=>a+b,0)/totals.length).toFixed(1);
+      document.getElementById('statMax').textContent = Math.max(...totals);
+      document.getElementById('statMin').textContent = Math.min(...totals);
+      document.getElementById('statCount').textContent = records.length;
+      document.getElementById('statsRow').style.display = 'flex';
+
+      // Stage distribution
+      const stageCounts = {};
+      records.forEach(r => { const s = r.stage || stageOf(r.total); stageCounts[s] = (stageCounts[s]||0)+1; });
+      document.getElementById('stageRow').innerHTML = ['尝鲜期','工具期','系统期','杠杆期'].map(s =>
+        stageCounts[s] ? `<div class="stage-chip ${stageMap[s]}">${s} × ${stageCounts[s]}</div>` : ''
+      ).join('');
+      document.getElementById('stageRow').style.display = 'flex';
+
+      // Render records
+      const wrap = document.getElementById('recordsWrap');
+      records.forEach(r => {
+        const stage = r.stage || stageOf(r.total);
+        const dimHtml = dimKeys.map(d => {
+          const v = r[d] || 0;
+          return `<div class="dim-dot dd${v}" title="${dimNames[dimKeys.indexOf(d)]}">${v||'?'}</div>`;
+        }).join('');
+
+        const card = document.createElement('div');
+        card.className = 'record-card';
+        card.dataset.number = r.number;
+        card.innerHTML = `
+          <div class="record-main" onclick="toggleCard(this)">
+            <div class="rec-name">${esc(r.name||'—')}</div>
+            <div class="rec-score">${r.total}</div>
+            <div class="rec-stage"><span class="stage-chip ${stageMap[stage]||''}" style="padding:3px 10px;font-size:11px">${esc(stage)}</span></div>
+            <div class="rec-dims">${dimHtml}</div>
+            <div class="rec-time">${fmtTime(r.createdAt)}</div>
+            <div class="rec-chevron">▾</div>
+          </div>
+          <div class="record-detail">
+            <div class="dim-legend">
+              ${dimKeys.map((d,i) => `<div class="dim-legend-item"><div class="dim-dot dd${r[d]||0}" style="width:18px;height:18px;font-size:10px">${r[d]||'?'}</div>${dimNames[i]}</div>`).join('')}
+            </div>
+            <div class="detail-grid">
+              ${renderField('最想突破', r.breakthrough)}
+              ${renderField('聚焦场景', r.scene)}
+              ${renderField('要复制的做法', r.copy)}
+              ${renderField('72h第一步', r.firstStep)}
+              ${renderField('验收指标', r.metric)}
+              ${renderField('可能阻碍→应对', r.obstacle)}
+            </div>
+            <div class="detail-actions">
+              <button class="btn-sm btn-primary" onclick="openEdit(${r.number})">编辑</button>
+              <a href="${r.url}" target="_blank" class="btn-sm btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center">查看 Issue</a>
+            </div>
+          </div>`;
+        card._record = r;
+        wrap.appendChild(card);
+      });
+
+    } catch(err) {
+      document.getElementById('stateBox').innerHTML = '加载失败：' + err.message;
       document.getElementById('stateBox').style.display = 'block';
-      document.getElementById('dataTable').style.display = 'none';
-      document.getElementById('statsRow').style.display = 'none';
-      document.getElementById('stageRow').style.display = 'none';
-
-      const session = document.getElementById('sessionInput').value.trim();
-      const labelParam = session ? `&labels=${encodeURIComponent(session)}` : '';
-
-      try {
-        const res = await fetch(
-          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100${labelParam}`,
-          { headers: { 'Accept': 'application/vnd.github+json' } }
-        );
-        if (!res.ok) throw new Error('GitHub API 返回 ' + res.status);
-        const issues = await res.json();
-
-        // Filter only scoring issues
-        const scoringIssues = issues.filter(i => i.title.startsWith('[评分]'));
-        const records = scoringIssues.map(parseIssue);
-
-        document.getElementById('countBadge').textContent = `${records.length} 条记录`;
-
-        if (records.length === 0) {
-          document.getElementById('stateBox').innerHTML = '暂无数据，等待参与者提交';
-          return;
-        }
-
-        // Stats
-        const totals = records.map(r => r.total);
-        const avg = (totals.reduce((a,b)=>a+b,0) / totals.length).toFixed(1);
-        document.getElementById('statAvg').textContent = avg;
-        document.getElementById('statMax').textContent = Math.max(...totals);
-        document.getElementById('statMin').textContent = Math.min(...totals);
-        document.getElementById('statCount').textContent = records.length;
-        document.getElementById('statsRow').style.display = 'flex';
-
-        // Stage distribution
-        const stageCounts = {};
-        records.forEach(r => { stageCounts[r.stage] = (stageCounts[r.stage]||0)+1; });
-        const stageRowEl = document.getElementById('stageRow');
-        stageRowEl.innerHTML = ['尝鲜期','工具期','系统期','杠杆期'].map(s => {
-          const c = stageCounts[s] || 0;
-          if (!c) return '';
-          return `<div class="stage-chip ${stageMap[s]||''}">${s} × ${c}</div>`;
-        }).join('');
-        stageRowEl.style.display = 'flex';
-
-        // Table
-        const dims = ['frequency','coverage','depth','result','system'];
-        document.getElementById('tableBody').innerHTML = records.map(r => {
-          const dimHtml = dims.map(d => {
-            const v = r[d] || 0;
-            return `<div class="dim-score ds-${v}">${v||'—'}</div>`;
-          }).join('');
-          return `<tr>
-            <td class="name-cell"><a class="name-link" href="${r.url}" target="_blank">${esc(r.name||'—')}</a></td>
-            <td class="score-cell">${r.total}</td>
-            <td><span class="stage-chip ${stageMap[r.stage]||''}" style="padding:3px 10px;font-size:12px">${esc(r.stage||'—')}</span></td>
-            <td><div class="dim-scores">${dimHtml}</div></td>
-            <td class="bt-text" title="${esc(r.breakthrough)}">${esc(r.breakthrough||'—')}</td>
-            <td class="bt-text" title="${esc(r.firstStep)}">${esc(r.firstStep||'—')}</td>
-            <td class="time-cell">${fmtTime(r.createdAt)}</td>
-          </tr>`;
-        }).join('');
-
-        document.getElementById('stateBox').style.display = 'none';
-        document.getElementById('dataTable').style.display = 'table';
-      } catch(err) {
-        document.getElementById('stateBox').innerHTML = '加载失败：' + err.message;
-      }
     }
+  }
 
-    loadData();
-  </script>
+  function toggleCard(mainEl) {
+    mainEl.closest('.record-card').classList.toggle('open');
+  }
+
+  // ——— Edit modal ———
+  function openEdit(issueNumber) {
+    const card = document.querySelector(`.record-card[data-number="${issueNumber}"]`);
+    const r = card._record;
+    editingIssue = r;
+    editScores = { frequency: r.frequency, coverage: r.coverage, depth: r.depth, result: r.result, system: r.system };
+
+    document.getElementById('modalTitle').textContent = `编辑：${r.name}`;
+    document.getElementById('m-name').value = r.name || '';
+    document.getElementById('m-breakthrough').value = r.breakthrough || '';
+    document.getElementById('m-scene').value = r.scene || '';
+    document.getElementById('m-copy').value = r.copy || '';
+    document.getElementById('m-first').value = r.firstStep || '';
+    document.getElementById('m-metric').value = r.metric || '';
+    document.getElementById('m-obstacle').value = r.obstacle || '';
+
+    // Set score buttons
+    dimKeys.forEach(d => {
+      const wrap = document.querySelector(`.score-btns[data-dim="${d}"]`);
+      wrap.querySelectorAll('.score-btn').forEach(btn => {
+        btn.classList.toggle('sel', parseInt(btn.dataset.val) === editScores[d]);
+      });
+    });
+
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    editingIssue = null;
+  }
+
+  async function saveRecord() {
+    if (!editingIssue) return;
+    const token = getToken();
+    if (!token) { showToast('请先输入 Token 才能编辑', 'err'); return; }
+
+    const name        = document.getElementById('m-name').value.trim();
+    const breakthrough = document.getElementById('m-breakthrough').value.trim();
+    const scene       = document.getElementById('m-scene').value.trim();
+    const copy        = document.getElementById('m-copy').value.trim();
+    const firstStep   = document.getElementById('m-first').value.trim();
+    const metric      = document.getElementById('m-metric').value.trim();
+    const obstacle    = document.getElementById('m-obstacle').value.trim();
+    const s           = editScores;
+    const total       = dimKeys.reduce((a, d) => a + (s[d]||0), 0);
+    const stage       = stageOf(total);
+
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = '保存中…'; btn.disabled = true;
+
+    const newBody = `## 基本信息
+| 字段 | 内容 |
+|------|------|
+| 姓名 | ${name} |
+| 场次 | ${editingIssue.session || '—'} |
+| 总分 | **${total} / 25** |
+| 阶段 | **${stage}** |
+
+## 五维评分
+| 维度 | 分数 |
+|------|------|
+| 使用频率 | ${s.frequency} |
+| 场景覆盖 | ${s.coverage} |
+| 应用深度 | ${s.depth} |
+| 结果产出 | ${s.result} |
+| 系统化程度 | ${s.system} |
+
+## 最想突破
+${breakthrough || '（未填写）'}
+
+## 72小时行动计划
+| 项目 | 内容 |
+|------|------|
+| 聚焦场景 | ${scene || '（未填写）'} |
+| 要复制的做法 | ${copy || '（未填写）'} |
+| 72h第一步 | ${firstStep || '（未填写）'} |
+| 验收指标 | ${metric || '（未填写）'} |
+| 可能阻碍→应对 | ${obstacle || '（未填写）'} |
+
+---
+*提交时间：${editingIssue.body.match(/提交时间：([^\n*]+)/)?.[1] || '—'}*
+*（后台编辑于 ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}）*`;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO}/issues/${editingIssue.number}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: JSON.stringify({
+          title: `[评分] ${name} · ${total}分 · ${stage}`,
+          body: newBody,
+          labels: [stage],
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || '保存失败');
+      }
+
+      showToast('保存成功', 'ok');
+      closeModal();
+      setTimeout(loadData, 800);
+    } catch(err) {
+      showToast('保存失败：' + err.message, 'err');
+    } finally {
+      btn.textContent = '保存'; btn.disabled = false;
+    }
+  }
+
+  // Close modal on overlay click
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+</script>
 </body>
 </html>
