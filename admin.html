@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>后台 · AI含量评分数据</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4F46E5;
+      --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+      --gray-400: #9CA3AF; --gray-600: #4B5563; --gray-800: #1F2937;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+    /* Login */
+    .login-wrap { display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px; }
+    .login-box { background: white; border-radius: 16px; padding: 40px 32px;
+      width: 100%; max-width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; }
+    .login-box h1 { font-size: 20px; margin-bottom: 6px; }
+    .login-box p { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+    .login-input { width: 100%; padding: 12px 14px; font-size: 16px;
+      border: 1.5px solid var(--gray-200); border-radius: 8px; outline: none;
+      margin-bottom: 12px; font-family: inherit; text-align: center; letter-spacing: 4px; }
+    .login-input:focus { border-color: var(--primary); }
+    .login-btn { width: 100%; padding: 13px; background: linear-gradient(135deg,#4F46E5,#7C3AED);
+      color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; }
+    .login-error { font-size: 13px; color: #EF4444; margin-top: 8px; }
+
+    /* App */
+    .app { display: none; }
+    .app.visible { display: block; }
+
+    /* Toolbar */
+    .toolbar { background: white; border-bottom: 1px solid var(--gray-200);
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .toolbar h1 { font-size: 17px; font-weight: 700; flex: 1; min-width: 160px; }
+    .session-input { padding: 7px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: 14px; outline: none; width: 130px; font-family: inherit; }
+    .session-input:focus { border-color: var(--primary); }
+    .refresh-btn { padding: 7px 16px; background: var(--primary); color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .count-badge { background: var(--gray-100); color: var(--gray-600);
+      padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
+    .stat-card { background: white; border-radius: 10px; padding: 14px 18px;
+      flex: 1; min-width: 120px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-label { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
+    .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); }
+    .stat-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+    /* Stage distribution */
+    .stage-row { display: flex; gap: 8px; padding: 0 24px 16px; flex-wrap: wrap; }
+    .stage-chip { display: flex; align-items: center; gap: 6px; padding: 6px 14px;
+      border-radius: 20px; font-size: 13px; font-weight: 500; }
+    .stage-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .s1 { background: #FEF3C7; color: #92400E; } .s1 .dot { background: #D97706; }
+    .s2 { background: #DBEAFE; color: #1E40AF; } .s2 .dot { background: #3B82F6; }
+    .s3 { background: #D1FAE5; color: #065F46; } .s3 .dot { background: #10B981; }
+    .s4 { background: #EDE9FE; color: #5B21B6; } .s4 .dot { background: #7C3AED; }
+
+    /* Table */
+    .table-wrap { padding: 0 24px 32px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 14px; }
+    thead { background: var(--gray-50); }
+    th { padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600;
+      color: var(--gray-600); white-space: nowrap; border-bottom: 1px solid var(--gray-200); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+
+    .name-cell { font-weight: 600; }
+    .score-cell { font-weight: 700; color: var(--primary); font-size: 16px; }
+    .dim-scores { display: flex; gap: 4px; }
+    .dim-score { width: 24px; height: 24px; display: flex; align-items: center;
+      justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .ds-1 { background: #FEE2E2; color: #991B1B; }
+    .ds-2 { background: #FEF3C7; color: #92400E; }
+    .ds-3 { background: #DBEAFE; color: #1E40AF; }
+    .ds-4 { background: #D1FAE5; color: #065F46; }
+    .ds-5 { background: #EDE9FE; color: #5B21B6; }
+    .bt-text { color: var(--gray-600); font-size: 13px; max-width: 200px; }
+    .time-cell { color: var(--gray-400); font-size: 12px; white-space: nowrap; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+
+    /* Loading */
+    .loading-state { text-align: center; padding: 60px; color: var(--gray-400); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--gray-200); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.6s linear infinite; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="login-wrap" id="loginWrap">
+    <div class="login-box">
+      <h1>后台管理</h1>
+      <p>AI含量评分 · 创业下午茶</p>
+      <input class="login-input" id="tokenInput" type="password" placeholder="输入管理密码" />
+      <button class="login-btn" onclick="login()">进入</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div class="app" id="app">
+    <div class="toolbar">
+      <h1>AI含量评分 · 后台数据</h1>
+      <input class="session-input" id="sessionInput" type="text" placeholder="场次 如 20260315" />
+      <button class="refresh-btn" onclick="loadData()">刷新</button>
+      <span class="count-badge" id="countBadge">0 条记录</span>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card">
+        <div class="stat-label">平均总分</div>
+        <div class="stat-val" id="statAvg">—</div>
+        <div class="stat-sub">满分 25 分</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">最高分</div>
+        <div class="stat-val" id="statMax">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">最低分</div>
+        <div class="stat-val" id="statMin">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">参与人数</div>
+        <div class="stat-val" id="statCount">—</div>
+      </div>
+    </div>
+
+    <div class="stage-row" id="stageRow" style="display:none"></div>
+
+    <div class="table-wrap">
+      <div class="loading-state" id="loadingState" style="display:none">
+        <div class="spinner"></div><br>加载中…
+      </div>
+      <table id="dataTable" style="display:none">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>总分</th>
+            <th>阶段</th>
+            <th title="使用频率/场景覆盖/应用深度/结果产出/系统化">五维分数 <span style="font-weight:400;color:#9CA3AF">频·覆·深·果·系</span></th>
+            <th>最想突破</th>
+            <th>72h第一步</th>
+            <th>提交时间</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">暂无数据，等待参与者提交</div>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = '';
+
+    // Enter key on password field
+    document.getElementById('tokenInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+
+    function login() {
+      const val = document.getElementById('tokenInput').value.trim();
+      if (!val) return;
+      adminToken = val;
+      loadData();
+    }
+
+    const stageConfig = [
+      { min:5,  max:9,  label:'尝鲜期', cls:'s1' },
+      { min:10, max:14, label:'工具期', cls:'s2' },
+      { min:15, max:19, label:'系统期', cls:'s3' },
+      { min:20, max:25, label:'杠杆期', cls:'s4' },
+    ];
+    function getStage(total) { return stageConfig.find(s => total >= s.min && total <= s.max); }
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    async function loadData() {
+      const session = document.getElementById('sessionInput').value.trim() || 'default';
+      document.getElementById('loadingState').style.display = 'block';
+      document.getElementById('dataTable').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('statsRow').style.display = 'none';
+      document.getElementById('stageRow').style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/data?token=${encodeURIComponent(adminToken)}&session=${encodeURIComponent(session)}`);
+        const data = await res.json();
+
+        if (res.status === 401) {
+          document.getElementById('loginError').textContent = '密码错误';
+          document.getElementById('loadingState').style.display = 'none';
+          return;
+        }
+
+        // Show app, hide login
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('app').classList.add('visible');
+        document.getElementById('loadingState').style.display = 'none';
+
+        const records = data.records || [];
+        document.getElementById('countBadge').textContent = `${records.length} 条记录`;
+
+        if (records.length === 0) {
+          document.getElementById('emptyState').style.display = 'block';
+          return;
+        }
+
+        // Stats
+        const totals = records.map(r => r.total || 0);
+        const avg = (totals.reduce((a,b) => a+b, 0) / totals.length).toFixed(1);
+        document.getElementById('statAvg').textContent = avg;
+        document.getElementById('statMax').textContent = Math.max(...totals);
+        document.getElementById('statMin').textContent = Math.min(...totals);
+        document.getElementById('statCount').textContent = records.length;
+        document.getElementById('statsRow').style.display = 'flex';
+
+        // Stage distribution
+        const stageCounts = {};
+        records.forEach(r => {
+          const s = getStage(r.total || 0);
+          if (s) stageCounts[s.label] = (stageCounts[s.label] || 0) + 1;
+        });
+        const stageRowEl = document.getElementById('stageRow');
+        stageRowEl.innerHTML = stageConfig.map(s => {
+          const c = stageCounts[s.label] || 0;
+          if (!c) return '';
+          return `<div class="stage-chip ${s.cls}"><span class="dot"></span>${s.label} × ${c}</div>`;
+        }).join('');
+        stageRowEl.style.display = 'flex';
+
+        // Table
+        const dims = ['frequency','coverage','depth','result','system'];
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = records.map(r => {
+          const dimHtml = dims.map(d => {
+            const v = r.scores?.[d] || 0;
+            return `<div class="dim-score ds-${v}">${v || '—'}</div>`;
+          }).join('');
+          const stage = getStage(r.total || 0);
+          const stageCls = stage ? stage.cls : '';
+          return `<tr>
+            <td class="name-cell">${esc(r.name || '—')}</td>
+            <td class="score-cell">${r.total || 0}</td>
+            <td><span class="stage-chip ${stageCls}" style="padding:3px 10px;font-size:12px">${esc(r.stage || '—')}</span></td>
+            <td><div class="dim-scores">${dimHtml}</div></td>
+            <td class="bt-text">${esc(r.breakthrough || '—')}</td>
+            <td class="bt-text">${esc(r.action?.firstStep || '—')}</td>
+            <td class="time-cell">${fmtTime(r.submittedAt)}</td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('dataTable').style.display = 'table';
+      } catch (err) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('emptyState').textContent = '加载失败：' + err.message;
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('app').classList.add('visible');
+      }
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>
