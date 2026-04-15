@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>后台 · AI含量评分卡</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #0ea5ff;
+      --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+      --gray-400: #9CA3AF; --gray-600: #4B5563; --gray-800: #1F2937;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+    /* Toolbar */
+    .toolbar { background: white; border-bottom: 1px solid var(--gray-200);
+      padding: 14px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .toolbar h1 { font-size: 17px; font-weight: 700; flex: 1; min-width: 160px; }
+    .session-input { padding: 7px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: 14px; outline: none; width: 140px; font-family: inherit; }
+    .session-input:focus { border-color: var(--primary); }
+    .refresh-btn { padding: 7px 16px; background: var(--primary); color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; }
+    .gh-link { font-size: 13px; color: var(--primary); text-decoration: none;
+      padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; }
+    .count-badge { background: var(--gray-100); color: var(--gray-600);
+      padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+
+    /* Stats */
+    .stats-row { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
+    .stat-card { background: white; border-radius: 10px; padding: 14px 18px;
+      flex: 1; min-width: 110px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-label { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
+    .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+    .stat-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+    /* Stage chips */
+    .stage-row { display: flex; gap: 8px; padding: 0 24px 16px; flex-wrap: wrap; }
+    .stage-chip { display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .s1 { background: #FEF3C7; color: #92400E; }
+    .s2 { background: #DBEAFE; color: #1E40AF; }
+    .s3 { background: #D1FAE5; color: #065F46; }
+    .s4 { background: #EDE9FE; color: #5B21B6; }
+
+    /* Table */
+    .table-wrap { padding: 0 24px 32px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 14px; }
+    thead { background: var(--gray-50); }
+    th { padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600;
+      color: var(--gray-600); white-space: nowrap; border-bottom: 1px solid var(--gray-200); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+
+    .name-cell { font-weight: 600; }
+    .name-link { color: var(--gray-800); text-decoration: none; }
+    .name-link:hover { color: var(--primary); }
+    .score-cell { font-weight: 800; color: var(--primary); font-size: 18px; }
+    .dim-scores { display: flex; gap: 4px; }
+    .dim-score { width: 24px; height: 24px; display: flex; align-items: center;
+      justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .ds-1 { background: #FEE2E2; color: #991B1B; }
+    .ds-2 { background: #FEF3C7; color: #92400E; }
+    .ds-3 { background: #DBEAFE; color: #1E40AF; }
+    .ds-4 { background: #D1FAE5; color: #065F46; }
+    .ds-5 { background: #EDE9FE; color: #5B21B6; }
+    .ds-0 { background: var(--gray-100); color: var(--gray-400); }
+    .bt-text { color: var(--gray-600); font-size: 13px; max-width: 180px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .time-cell { color: var(--gray-400); font-size: 12px; white-space: nowrap; }
+
+    .state-box { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--gray-200); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.6s linear infinite; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <h1>AI含量评分卡 · 后台数据</h1>
+    <input class="session-input" id="sessionInput" type="text" placeholder="场次标签（选填）" />
+    <button class="refresh-btn" onclick="loadData()">刷新</button>
+    <a class="gh-link" href="./index.html">评分卡首页 →</a>
+    <a class="gh-link" href="https://github.com/waterhuangfu-art/ai-score-card/issues" target="_blank">GitHub Issues →</a>
+    <span class="count-badge" id="countBadge">加载中…</span>
+  </div>
+
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-card">
+      <div class="stat-label">平均总分</div>
+      <div class="stat-val" id="statAvg">—</div>
+      <div class="stat-sub">满分 25 分</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最高分</div>
+      <div class="stat-val" id="statMax">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最低分</div>
+      <div class="stat-val" id="statMin">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">参与人数</div>
+      <div class="stat-val" id="statCount">—</div>
+    </div>
+  </div>
+
+  <div class="stage-row" id="stageRow" style="display:none"></div>
+
+  <div class="table-wrap">
+    <div class="state-box" id="stateBox">
+      <div class="spinner"></div><br>加载中…
+    </div>
+    <table id="dataTable" style="display:none">
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>总分</th>
+          <th>阶段</th>
+          <th>五维 <span style="font-weight:400;color:#9CA3AF;font-size:11px">频·覆·深·果·系</span></th>
+          <th>最想突破</th>
+          <th>72h第一步</th>
+          <th>提交时间</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const REPO = 'waterhuangfu-art/ai-score-card';
+
+    const stageMap = { '尝鲜期':'s1', '工具期':'s2', '系统期':'s3', '杠杆期':'s4' };
+
+    function parseIssue(issue) {
+      const body = issue.body || '';
+      const get = (label) => {
+        const re = new RegExp(`\\|\\s*${label}\\s*\\|\\s*(.+?)\\s*\\|`);
+        const m = body.match(re);
+        return m ? m[1].replace(/\*\*/g,'').trim() : '';
+      };
+      return {
+        number: issue.number,
+        url: issue.html_url,
+        name: get('姓名'),
+        total: parseInt(get('总分')) || 0,
+        stage: get('阶段'),
+        frequency: parseInt(get('使用频率')) || 0,
+        coverage: parseInt(get('场景覆盖')) || 0,
+        depth: parseInt(get('应用深度')) || 0,
+        result: parseInt(get('结果产出')) || 0,
+        system: parseInt(get('系统化程度')) || 0,
+        breakthrough: get('最想突破') === '（未填写）' ? '' : get('最想突破'),
+        firstStep: get('72h第一步') === '（未填写）' ? '' : get('72h第一步'),
+        createdAt: issue.created_at,
+      };
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function applyQueryDefaults() {
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session');
+      if (session) {
+        document.getElementById('sessionInput').value = session;
+      }
+    }
+
+    async function loadData() {
+      document.getElementById('stateBox').innerHTML = '<div class="spinner"></div><br>加载中…';
+      document.getElementById('stateBox').style.display = 'block';
+      document.getElementById('dataTable').style.display = 'none';
+      document.getElementById('statsRow').style.display = 'none';
+      document.getElementById('stageRow').style.display = 'none';
+
+      const session = document.getElementById('sessionInput').value.trim();
+      const labelParam = session ? `&labels=${encodeURIComponent(session)}` : '';
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100${labelParam}`,
+          { headers: { 'Accept': 'application/vnd.github+json' } }
+        );
+        if (!res.ok) throw new Error('GitHub API 返回 ' + res.status);
+        const issues = await res.json();
+
+        // Filter only scoring issues
+        const scoringIssues = issues.filter(i => i.title.startsWith('[评分]'));
+        const records = scoringIssues.map(parseIssue);
+
+        document.getElementById('countBadge').textContent = `${records.length} 条记录`;
+
+        if (records.length === 0) {
+          document.getElementById('stateBox').innerHTML = '暂无数据，等待参与者提交';
+          return;
+        }
+
+        // Stats
+        const totals = records.map(r => r.total);
+        const avg = (totals.reduce((a,b)=>a+b,0) / totals.length).toFixed(1);
+        document.getElementById('statAvg').textContent = avg;
+        document.getElementById('statMax').textContent = Math.max(...totals);
+        document.getElementById('statMin').textContent = Math.min(...totals);
+        document.getElementById('statCount').textContent = records.length;
+        document.getElementById('statsRow').style.display = 'flex';
+
+        // Stage distribution
+        const stageCounts = {};
+        records.forEach(r => { stageCounts[r.stage] = (stageCounts[r.stage]||0)+1; });
+        const stageRowEl = document.getElementById('stageRow');
+        stageRowEl.innerHTML = ['尝鲜期','工具期','系统期','杠杆期'].map(s => {
+          const c = stageCounts[s] || 0;
+          if (!c) return '';
+          return `<div class="stage-chip ${stageMap[s]||''}">${s} × ${c}</div>`;
+        }).join('');
+        stageRowEl.style.display = 'flex';
+
+        // Table
+        const dims = ['frequency','coverage','depth','result','system'];
+        document.getElementById('tableBody').innerHTML = records.map(r => {
+          const dimHtml = dims.map(d => {
+            const v = r[d] || 0;
+            return `<div class="dim-score ds-${v}">${v||'—'}</div>`;
+          }).join('');
+          return `<tr>
+            <td class="name-cell"><a class="name-link" href="${r.url}" target="_blank">${esc(r.name||'—')}</a></td>
+            <td class="score-cell">${r.total}</td>
+            <td><span class="stage-chip ${stageMap[r.stage]||''}" style="padding:3px 10px;font-size:12px">${esc(r.stage||'—')}</span></td>
+            <td><div class="dim-scores">${dimHtml}</div></td>
+            <td class="bt-text" title="${esc(r.breakthrough)}">${esc(r.breakthrough||'—')}</td>
+            <td class="bt-text" title="${esc(r.firstStep)}">${esc(r.firstStep||'—')}</td>
+            <td class="time-cell">${fmtTime(r.createdAt)}</td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('stateBox').style.display = 'none';
+        document.getElementById('dataTable').style.display = 'table';
+      } catch(err) {
+        document.getElementById('stateBox').innerHTML = '加载失败：' + err.message;
+      }
+    }
+
+    applyQueryDefaults();
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,8 +1,16 @@
 const REPO = 'waterhuangfu-art/ai-score-card';
-const BASE_LABEL = 'opc-self-card';
-const ISSUE_PREFIX = '[OPC自评]';
+const BASE_LABEL = 'ai-score-card';
+const ISSUE_PREFIX = '[评分]';
 
 const ipTimes = new Map();
+
+const dimensions = [
+  { key: 'frequency', label: '使用频率' },
+  { key: 'coverage', label: '场景覆盖' },
+  { key: 'depth', label: '应用深度' },
+  { key: 'result', label: '结果产出' },
+  { key: 'system', label: '系统化程度' }
+];
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -15,10 +23,10 @@ function isRateLimited(ip) {
 }
 
 function stageOf(total) {
-  if (total <= 9) return '观望期';
-  if (total <= 14) return '准备期';
-  if (total <= 19) return '启动期';
-  return '加速期';
+  if (total <= 9) return '尝鲜期';
+  if (total <= 14) return '工具期';
+  if (total <= 19) return '系统期';
+  return '杠杆期';
 }
 
 function cleanText(value, maxLength = 120) {
@@ -72,39 +80,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: '请求格式错误' });
   }
 
-  const dimensions = [
-    { key: 'experience', label: '行业经验深度' },
-    { key: 'delivery', label: '可复制的交付能力' },
-    { key: 'tools', label: '工具 / AI 使用能力' },
-    { key: 'brand', label: '个人品牌 / 流量' },
-    { key: 'finance', label: '财务准备度' }
-  ];
-
-  const rawScores = payload?.scores || {};
-  const rawReasons = payload?.reasons || {};
-
   const scores = {};
-  const reasons = {};
-  for (const dim of dimensions) {
-    scores[dim.key] = normalizeScore(rawScores[dim.key]);
-    reasons[dim.key] = cleanText(rawReasons[dim.key], 180);
-  }
+  dimensions.forEach((dim) => {
+    scores[dim.key] = normalizeScore(payload?.scores?.[dim.key]);
+  });
 
   if (Object.values(scores).some((score) => !score)) {
     return res.status(400).json({ error: '请先完成全部五个维度的评分' });
   }
 
-  const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
-  const stage = stageOf(total);
   const name = cleanText(payload?.name, 24);
-  const session = cleanText(payload?.session, 40);
-  const breakthroughs = Array.isArray(payload?.breakthroughs)
-    ? payload.breakthroughs.map((item) => cleanText(item, 80)).filter(Boolean).slice(0, 6)
-    : [];
-
   if (!name) {
     return res.status(400).json({ error: '姓名不能为空' });
   }
+
+  const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
+  const stage = cleanText(payload?.stage, 20) || stageOf(total);
+  const session = cleanText(payload?.session, 40);
+  const breakthrough = cleanText(payload?.breakthrough, 180);
+  const action = {
+    scene: cleanText(payload?.action?.scene, 180),
+    copy: cleanText(payload?.action?.copy, 180),
+    firstStep: cleanText(payload?.action?.firstStep, 180),
+    metric: cleanText(payload?.action?.metric, 180),
+    obstacle: cleanText(payload?.action?.obstacle, 180)
+  };
 
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
@@ -112,12 +112,8 @@ export default async function handler(req, res) {
   }
 
   const issueTitle = `${ISSUE_PREFIX} ${name} · ${total}分 · ${stage}`;
-  const scoreRows = dimensions.map((dim) => (
-    `| ${dim.label} | ${scores[dim.key]} | ${reasons[dim.key] || '（未填写）'} |`
-  )).join('\n');
-  const breakthroughSection = breakthroughs.length
-    ? breakthroughs.map((item) => `- ${item}`).join('\n')
-    : '（未填写）';
+  const labels = [BASE_LABEL, stage];
+  if (session) labels.push(session);
 
   const issueBody = `## 基本信息
 | 字段 | 内容 |
@@ -126,35 +122,38 @@ export default async function handler(req, res) {
 | 场次 | ${session || '—'} |
 | 总分 | **${total} / 25** |
 | 阶段 | **${stage}** |
+| 使用频率 | ${scores.frequency} |
+| 场景覆盖 | ${scores.coverage} |
+| 应用深度 | ${scores.depth} |
+| 结果产出 | ${scores.result} |
+| 系统化程度 | ${scores.system} |
+| 最想突破 | ${breakthrough || '（未填写）'} |
+| 72h第一步 | ${action.firstStep || '（未填写）'} |
 
-## 五维评分
-| 维度 | 分数 | 理由 |
-|------|------|------|
-${scoreRows}
-
-## 最想突破
-${breakthroughSection}
+## 72h行动计划
+| 项目 | 内容 |
+|------|------|
+| 聚焦场景 | ${action.scene || '（未填写）'} |
+| 要复制的做法 | ${action.copy || '（未填写）'} |
+| 72h第一步 | ${action.firstStep || '（未填写）'} |
+| 验收指标 | ${action.metric || '（未填写）'} |
+| 阻碍与应对 | ${action.obstacle || '（未填写）'} |
 
 ---
 *提交时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}*`;
 
-  const labels = [BASE_LABEL, stage];
-  if (session) labels.push(session);
-
   try {
     const labelColors = {
       [BASE_LABEL]: '0ea5e9',
-      '观望期': 'f59e0b',
-      '准备期': '3b82f6',
-      '启动期': '10b981',
-      '加速期': '8b5cf6'
+      '尝鲜期': 'f59e0b',
+      '工具期': '3b82f6',
+      '系统期': '10b981',
+      '杠杆期': '8b5cf6'
     };
 
     await ensureLabel(token, BASE_LABEL, labelColors[BASE_LABEL]);
     await ensureLabel(token, stage, labelColors[stage] || '94a3b8');
-    if (session) {
-      await ensureLabel(token, session, '2563eb');
-    }
+    if (session) await ensureLabel(token, session, '2563eb');
 
     const issueResponse = await fetch(`https://api.github.com/repos/${REPO}/issues`, {
       method: 'POST',

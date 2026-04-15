@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一人公司准备度自评卡</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #eef6ff;
+      --bg-2: #f9fcff;
+      --panel: rgba(255, 255, 255, 0.92);
+      --line: #cfe3ff;
+      --text: #162033;
+      --muted: #63738d;
+      --blue: #2f86ff;
+      --blue-2: #55c5ff;
+      --blue-soft: #edf6ff;
+      --blue-soft-2: #f7fbff;
+      --amber: #f59e0b;
+      --green: #1db57b;
+      --shadow: 0 18px 50px rgba(78, 132, 212, 0.18);
+      --radius: 22px;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(85, 197, 255, 0.28), transparent 26%),
+        radial-gradient(circle at top right, rgba(47, 134, 255, 0.16), transparent 22%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      padding: 32px 20px 56px;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .hero-main,
+    .hero-side,
+    .section,
+    .sticky-panel {
+      background: var(--panel);
+      border: 1px solid rgba(207, 227, 255, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-main {
+      padding: 30px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -60px;
+      top: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(85, 197, 255, 0.35), rgba(85, 197, 255, 0));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: 42px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      margin-bottom: 14px;
+    }
+
+    .hero-copy {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .hero-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .hero-side {
+      padding: 24px;
+      background: linear-gradient(145deg, rgba(47, 134, 255, 0.96), rgba(85, 197, 255, 0.84));
+      color: #fff;
+    }
+
+    .side-label {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .side-big {
+      font-size: 40px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .side-copy {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 24px;
+    }
+
+    .section-head {
+      margin-bottom: 18px;
+    }
+
+    .section-kicker {
+      color: var(--blue);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .section-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .basic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label,
+    .field-title {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .field textarea {
+      min-height: 88px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(47, 134, 255, 0.12);
+    }
+
+    .dimension-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, #fff, var(--blue-soft-2));
+      padding: 22px 22px 18px;
+    }
+
+    .dimension-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .dimension-no {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .dimension-title {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+    }
+
+    .dimension-desc {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    .scale-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .score-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .score-option {
+      position: relative;
+      display: block;
+      cursor: pointer;
+    }
+
+    .score-option-card {
+      height: 100%;
+      border: 1.5px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px 12px;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+      min-height: 138px;
+    }
+
+    .score-option:hover .score-option-card {
+      transform: translateY(-2px);
+      border-color: #a8d1ff;
+      box-shadow: 0 10px 20px rgba(47, 134, 255, 0.09);
+    }
+
+    .score-option input:checked + .score-option-card {
+      border-color: var(--blue);
+      background: linear-gradient(180deg, #fff, var(--blue-soft));
+      box-shadow: 0 12px 24px rgba(47, 134, 255, 0.14);
+    }
+
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .score-text {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .reason-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .choice {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.16s ease, transform 0.16s ease, background 0.16s ease;
+      min-height: 68px;
+    }
+
+    .choice:hover {
+      border-color: #a8d1ff;
+      transform: translateY(-1px);
+    }
+
+    .choice input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .choice span {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .choice.checked {
+      border-color: var(--blue);
+      background: linear-gradient(180deg, #fff, var(--blue-soft));
+    }
+
+    .side {
+      position: relative;
+    }
+
+    .sticky-panel {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .metric-shell {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric-card {
+      background: linear-gradient(180deg, #fff, var(--blue-soft-2));
+      border: 1.5px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--blue);
+    }
+
+    .stage-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      margin-top: 4px;
+    }
+
+    .stage-idle { background: #eef2f7; color: #667085; }
+    .stage-watch { background: #fff1d6; color: #9a5b00; }
+    .stage-ready { background: #e4f0ff; color: #1f5bcc; }
+    .stage-start { background: #dcf7ef; color: #0b8a5b; }
+    .stage-fast { background: #ece7ff; color: #6742d8; }
+
+    .stage-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8eff9;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-2));
+      transition: width 0.18s ease;
+    }
+
+    .progress-copy {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .summary-box {
+      border-top: 1px solid #edf2f8;
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+
+    .summary-box-title {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .summary-line {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+
+    .summary-dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      color: #fff;
+      font: inherit;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 18px 30px rgba(47, 134, 255, 0.24);
+      margin-top: 10px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 20px 34px rgba(47, 134, 255, 0.28);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .submit-tip,
+    .message {
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .submit-tip { color: var(--muted); }
+
+    .message {
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid transparent;
+      display: none;
+    }
+
+    .message.error {
+      display: block;
+      background: #fff3f3;
+      border-color: #f4caca;
+      color: #b42318;
+    }
+
+    .message.success {
+      display: block;
+      background: #eefcf6;
+      border-color: #b8eccf;
+      color: #0f8d5b;
+    }
+
+    .success-banner {
+      display: none;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #e8fff4, #f3fffb);
+      border: 1px solid #bcebd4;
+      border-radius: 18px;
+      padding: 16px 18px;
+      color: #0f8d5b;
+      font-size: 15px;
+      line-height: 1.7;
+      box-shadow: 0 12px 26px rgba(29, 181, 123, 0.12);
+    }
+
+    .success-banner strong { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    @media (max-width: 1024px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 18px 12px 36px; }
+      .hero-main, .hero-side, .section, .sticky-panel { border-radius: 18px; }
+      .hero-main { padding: 22px 20px; }
+      h1 { font-size: 32px; }
+      .side-big { font-size: 30px; }
+      .section { padding: 18px; }
+      .section-title { font-size: 24px; }
+      .basic-grid,
+      .choice-grid,
+      .metric-shell {
+        grid-template-columns: 1fr;
+      }
+      .scale-grid {
+        grid-template-columns: 1fr;
+      }
+      .dimension-title { font-size: 22px; }
+      .score-option-card { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-main">
+        <div class="eyebrow">OPC 自评工具</div>
+        <h1>一人公司准备度自评卡</h1>
+        <div class="hero-copy">
+          先不要急着判断自己“能不能做一人公司”，先把真实状态量出来。这张卡不是考试，而是帮你看清：你现在离“一套能自己跑的生意”还有多远。
+        </div>
+        <div class="hero-chips">
+          <div class="hero-chip">5 个维度</div>
+          <div class="hero-chip">每维 1-5 分</div>
+          <div class="hero-chip">满分 25 分</div>
+          <div class="hero-chip">自动判断阶段</div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="side-label">填写提醒</div>
+        <div class="side-big">独立填写，不用对答案。</div>
+        <div class="side-copy">
+          先按你现在的真实状态选分数，再简单写一句理由。你越诚实，这张卡对你越有用。
+        </div>
+      </div>
+    </header>
+
+    <div class="success-banner" id="successBanner"></div>
+
+    <form id="scoreForm" class="layout">
+      <main class="main">
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">基本信息</div>
+            <div class="section-title">先留下你的名字和场次</div>
+            <div class="section-sub">场次标签选填。如果你是现场使用，可以提前在链接里带上 `?session=场次名` 自动填入。</div>
+          </div>
+          <div class="basic-grid">
+            <div class="field">
+              <label for="name">姓名或昵称</label>
+              <input id="name" name="name" type="text" maxlength="24" placeholder="例如：黄赋 / 小李 / 小王" />
+            </div>
+            <div class="field">
+              <label for="session">场次标签</label>
+              <input id="session" name="session" type="text" maxlength="40" placeholder="例如：创业下午茶·OPC" />
+            </div>
+          </div>
+        </section>
+
+        <div id="dimensionContainer"></div>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">突破方向</div>
+            <div class="section-title">你现在最想突破什么</div>
+            <div class="section-sub">固定选项最多勾 2 项；如果你的情况不在列表里，可以自己补充。</div>
+          </div>
+
+          <div class="choice-grid" id="breakthroughContainer"></div>
+
+          <div class="field">
+            <label for="otherBreakthrough">其他（选填）</label>
+            <input id="otherBreakthrough" type="text" maxlength="60" placeholder="例如：找到更适合自己的切入行业 / 先跑通副业现金流" />
+          </div>
+        </section>
+      </main>
+
+      <aside class="side">
+        <div class="sticky-panel">
+          <div class="section-kicker">实时结果</div>
+          <div class="metric-shell">
+            <div class="metric-card">
+              <div class="metric-label">当前总分</div>
+              <div class="metric-value" id="totalScore">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">当前阶段</div>
+              <div class="stage-pill stage-idle" id="stagePill">待完成</div>
+            </div>
+          </div>
+
+          <div class="stage-desc" id="stageDesc">先完成 5 个维度的选择，系统会自动判断你目前所处的阶段。</div>
+
+          <div class="progress"><span id="progressBar"></span></div>
+          <div class="progress-copy" id="progressCopy">已完成 0 / 5 个维度</div>
+
+          <div class="summary-box">
+            <div class="summary-box-title">阶段说明</div>
+            <div class="summary-line">
+              <div class="summary-dot"></div>
+              <div>5-9 分：观望期，先补短板，适合从副业或兼职试起。</div>
+            </div>
+            <div class="summary-line">
+              <div class="summary-dot"></div>
+              <div>10-14 分：准备期，基础有了，但切口还不清晰。</div>
+            </div>
+            <div class="summary-line">
+              <div class="summary-dot"></div>
+              <div>15-19 分：启动期，可以开始筹划第一步并验证方向。</div>
+            </div>
+            <div class="summary-line">
+              <div class="summary-dot"></div>
+              <div>20-25 分：加速期，重点放在效率、复制和系统化。</div>
+            </div>
+          </div>
+
+          <button class="submit-btn" type="submit" id="submitBtn">提交我的自评卡</button>
+          <div class="submit-tip">提交后会进入后台汇总，便于现场看到整体分布和大家最想突破的方向。</div>
+          <div class="message" id="formMessage"></div>
+        </div>
+      </aside>
+    </form>
+  </div>
+
+  <script>
+    const dimensions = [
+      {
+        key: 'experience',
+        title: '维度一：行业经验深度',
+        desc: '看的是你在一个行业里积累了多少可复用的判断力。',
+        placeholder: '简单写一句理由，比如：我做这个行业 4 年了，但项目方向还比较分散。',
+        options: [
+          '刚入行或经验分散',
+          '有 1-2 年经验',
+          '有 3-5 年集中经验',
+          '有 6-8 年深度经验',
+          '8 年+，被认为是行家'
+        ]
+      },
+      {
+        key: 'delivery',
+        title: '维度二：可复制的交付能力',
+        desc: '看的是你的服务有没有从“每次重来”进化成“可以复制”。',
+        placeholder: '简单写一句理由，比如：我已经有固定流程，但还没有完整 SOP。',
+        options: [
+          '每次都是定制交付，没有模板',
+          '有部分重复的做法',
+          '有部分模板和流程',
+          '有比较完整的 SOP',
+          '有标准产品或完整 SOP，可直接复制'
+        ]
+      },
+      {
+        key: 'tools',
+        title: '维度三：工具 / AI 使用能力',
+        desc: '看的是你能不能用工具替代体力，而不是只靠自己硬扛。',
+        placeholder: '简单写一句理由，比如：我每天会用几个 AI 工具，但还没打通自动化。',
+        options: [
+          '基本不用工具',
+          '偶尔用一两个工具',
+          '日常使用几个工具',
+          '有自己的工具组合',
+          '已建立自动化工作流'
+        ]
+      },
+      {
+        key: 'brand',
+        title: '维度四：个人品牌 / 流量',
+        desc: '看的是你有没有稳定被看见、被找到、被信任的入口。',
+        placeholder: '简单写一句理由，比如：我会发内容，但目前还没有稳定获客。',
+        options: [
+          '没有公开内容',
+          '有零散内容',
+          '有一些内容，偶尔有人找来',
+          '有稳定的内容输出',
+          '有稳定的内容 + 获客渠道'
+        ]
+      },
+      {
+        key: 'finance',
+        title: '维度五：财务准备度',
+        desc: '看的是你有没有给自己留下试错空间，而不是一停工资就慌。',
+        placeholder: '简单写一句理由，比如：我有 6 个月储备，但还没有稳定副业收入。',
+        options: [
+          '完全依赖工资',
+          '有 1-3 个月储备',
+          '有 6 个月储备',
+          '有 9 个月储备',
+          '有 12 个月+ 储备或已有副业收入'
+        ]
+      }
+    ];
+
+    const API_BASE = window.location.hostname.endsWith('github.io')
+      ? 'https://ai-score-card.vercel.app'
+      : '';
+
+    const breakthroughs = [
+      '找到第一个付费客户',
+      '把定制服务变成标准化产品',
+      '建立个人品牌和内容',
+      '用 AI 提高效率',
+      '财务储备和风险管理'
+    ];
+
+    const stageConfig = {
+      idle: {
+        label: '待完成',
+        className: 'stage-idle',
+        desc: '先完成 5 个维度的选择，系统会自动判断你目前所处的阶段。'
+      },
+      watch: {
+        label: '观望期',
+        className: 'stage-watch',
+        desc: '想法多，条件少。建议先补短板，从副业或小范围试水开始。'
+      },
+      ready: {
+        label: '准备期',
+        className: 'stage-ready',
+        desc: '有基础，但切口还不够清晰。建议先做内容、咨询或小项目验证。'
+      },
+      start: {
+        label: '启动期',
+        className: 'stage-start',
+        desc: '条件基本具备，关键是选对方向并迈出第一步。'
+      },
+      fast: {
+        label: '加速期',
+        className: 'stage-fast',
+        desc: '你已经在路上，下一步重点是提高效率、复制性和系统化程度。'
+      }
+    };
+
+    function getStage(total) {
+      if (total <= 9) return 'watch';
+      if (total <= 14) return 'ready';
+      if (total <= 19) return 'start';
+      return 'fast';
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderDimensions() {
+      const html = dimensions.map((dim, idx) => `
+        <section class="section">
+          <div class="dimension-card">
+            <div class="dimension-top">
+              <div class="dimension-no">${idx + 1}</div>
+              <div>
+                <div class="dimension-title">${dim.title}</div>
+                <div class="dimension-desc">${dim.desc}</div>
+              </div>
+            </div>
+
+            <div class="scale-grid">
+              ${dim.options.map((text, score) => `
+                <label class="score-option">
+                  <input type="radio" name="score-${dim.key}" value="${score + 1}" />
+                  <span class="score-option-card">
+                    <span class="score-badge">${score + 1} 分</span>
+                    <span class="score-text">${escapeHtml(text)}</span>
+                  </span>
+                </label>
+              `).join('')}
+            </div>
+
+            <div class="reason-grid">
+              <div class="field-title">理由</div>
+              <div class="field">
+                <textarea id="reason-${dim.key}" placeholder="${escapeHtml(dim.placeholder)}"></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+      `).join('');
+
+      document.getElementById('dimensionContainer').innerHTML = html;
+    }
+
+    function renderBreakthroughs() {
+      const html = breakthroughs.map((item, idx) => `
+        <label class="choice">
+          <input type="checkbox" name="breakthrough" value="${escapeHtml(item)}" data-index="${idx}" />
+          <span>${escapeHtml(item)}</span>
+        </label>
+      `).join('');
+      document.getElementById('breakthroughContainer').innerHTML = html;
+    }
+
+    function getSelectedScores() {
+      const scores = {};
+      dimensions.forEach((dim) => {
+        const checked = document.querySelector(`input[name="score-${dim.key}"]:checked`);
+        scores[dim.key] = checked ? Number(checked.value) : 0;
+      });
+      return scores;
+    }
+
+    function getSelectedReasons() {
+      const reasons = {};
+      dimensions.forEach((dim) => {
+        reasons[dim.key] = document.getElementById(`reason-${dim.key}`).value.trim();
+      });
+      return reasons;
+    }
+
+    function updateSummary() {
+      const scores = getSelectedScores();
+      const completed = Object.values(scores).filter(Boolean).length;
+      const total = Object.values(scores).reduce((sum, value) => sum + value, 0);
+
+      document.getElementById('totalScore').textContent = total;
+      document.getElementById('progressBar').style.width = `${completed / dimensions.length * 100}%`;
+      document.getElementById('progressCopy').textContent = `已完成 ${completed} / ${dimensions.length} 个维度`;
+
+      const stagePill = document.getElementById('stagePill');
+      const stageDesc = document.getElementById('stageDesc');
+
+      const stageKey = completed === dimensions.length ? getStage(total) : 'idle';
+      const conf = stageConfig[stageKey];
+
+      stagePill.textContent = conf.label;
+      stagePill.className = `stage-pill ${conf.className}`;
+      stageDesc.textContent = conf.desc;
+
+      document.querySelectorAll('.choice').forEach((el) => {
+        const input = el.querySelector('input');
+        el.classList.toggle('checked', input.checked);
+      });
+    }
+
+    function setMessage(type, text) {
+      const el = document.getElementById('formMessage');
+      if (!text) {
+        el.className = 'message';
+        el.textContent = '';
+        return;
+      }
+      el.className = `message ${type}`;
+      el.textContent = text;
+    }
+
+    function validateBreakthroughSelection(changedInput) {
+      const fixedChecked = Array.from(document.querySelectorAll('input[name="breakthrough"]:checked'));
+      if (fixedChecked.length <= 2) return true;
+      changedInput.checked = false;
+      updateSummary();
+      setMessage('error', '固定选项最多勾选 2 项。');
+      return false;
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      setMessage('', '');
+
+      const name = document.getElementById('name').value.trim();
+      const session = document.getElementById('session').value.trim();
+      const scores = getSelectedScores();
+      const reasons = getSelectedReasons();
+      const completed = Object.values(scores).filter(Boolean).length;
+
+      if (!name) {
+        setMessage('error', '请先填写姓名或昵称。');
+        document.getElementById('name').focus();
+        return;
+      }
+
+      if (completed !== dimensions.length) {
+        setMessage('error', '请先完成全部 5 个维度的评分。');
+        return;
+      }
+
+      const total = Object.values(scores).reduce((sum, value) => sum + value, 0);
+      const stageKey = getStage(total);
+      const fixedBreakthroughs = Array.from(document.querySelectorAll('input[name="breakthrough"]:checked')).map((item) => item.value);
+      const otherBreakthrough = document.getElementById('otherBreakthrough').value.trim();
+      const breakthroughsPayload = otherBreakthrough ? fixedBreakthroughs.concat(otherBreakthrough) : fixedBreakthroughs;
+
+      const payload = {
+        name,
+        session,
+        total,
+        stage: stageConfig[stageKey].label,
+        scores,
+        reasons,
+        breakthroughs: breakthroughsPayload
+      };
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/submit-opc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '提交失败，请稍后再试');
+
+        const banner = document.getElementById('successBanner');
+        banner.style.display = 'block';
+        banner.innerHTML = `<strong>提交成功</strong>你的自评卡已经进入后台。当前总分 ${total} / 25，阶段为 ${stageConfig[stageKey].label}。Issue #${data.issueNumber || '—'}`;
+
+        setMessage('success', `提交成功，已写入后台。你的阶段：${stageConfig[stageKey].label}`);
+        document.getElementById('scoreForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        setMessage('error', err.message || '提交失败，请稍后再试');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '提交我的自评卡';
+      }
+    }
+
+    function initFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session');
+      if (session && !document.getElementById('session').value) {
+        document.getElementById('session').value = session;
+      }
+    }
+
+    renderDimensions();
+    renderBreakthroughs();
+    initFromQuery();
+    updateSummary();
+
+    document.addEventListener('change', (event) => {
+      if (event.target.name === 'breakthrough') {
+        if (!validateBreakthroughSelection(event.target)) return;
+      }
+      updateSummary();
+    });
+
+    document.addEventListener('input', () => {
+      updateSummary();
+    });
+
+    document.getElementById('scoreForm').addEventListener('submit', handleSubmit);
+  </script>
+</body>
+</html>

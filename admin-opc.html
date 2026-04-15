@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>后台 · 一人公司准备度自评卡</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #eef6ff;
+      --bg-2: #f9fcff;
+      --panel: rgba(255, 255, 255, 0.94);
+      --line: #d6e5f7;
+      --text: #162033;
+      --muted: #6a7a92;
+      --blue: #2f86ff;
+      --blue-2: #56c8ff;
+      --soft: #f6fbff;
+      --shadow: 0 16px 42px rgba(67, 116, 196, 0.14);
+      --watch-bg: #fff2d9;
+      --watch-fg: #9a5b00;
+      --ready-bg: #e5f0ff;
+      --ready-fg: #1f5bcc;
+      --start-bg: #dcf8ee;
+      --start-fg: #0b8b5a;
+      --fast-bg: #efeaff;
+      --fast-fg: #6742d8;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(86, 200, 255, 0.24), transparent 24%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      padding: 24px 18px 40px;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .toolbar,
+    .stats-grid,
+    .avg-grid,
+    .table-wrap {
+      background: var(--panel);
+      border: 1px solid rgba(214, 229, 247, 0.95);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .toolbar-copy {
+      width: 100%;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-top: -4px;
+    }
+
+    .toolbar input {
+      width: 180px;
+      max-width: 100%;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    .toolbar input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(47, 134, 255, 0.12);
+    }
+
+    .btn,
+    .link-btn {
+      border-radius: 12px;
+      padding: 11px 16px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(47, 134, 255, 0.18);
+    }
+
+    .link-btn {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--blue);
+    }
+
+    .badge {
+      margin-left: auto;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff, var(--soft));
+      border: 1px solid var(--line);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .stat-sub {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .avg-grid {
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .avg-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .avg-head h2 {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .avg-head span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .avg-row,
+    .stage-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .avg-chip,
+    .stage-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+    }
+
+    .stage-chip.watch { background: var(--watch-bg); color: var(--watch-fg); border-color: transparent; }
+    .stage-chip.ready { background: var(--ready-bg); color: var(--ready-fg); border-color: transparent; }
+    .stage-chip.start { background: var(--start-bg); color: var(--start-fg); border-color: transparent; }
+    .stage-chip.fast { background: var(--fast-bg); color: var(--fast-fg); border-color: transparent; }
+
+    .table-wrap {
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .state-box {
+      text-align: center;
+      padding: 68px 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid #d8e7fb;
+      border-top-color: var(--blue);
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    thead {
+      background: var(--soft);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #edf3fb;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fbfdff; }
+
+    .name-link {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .name-link:hover { color: var(--blue); }
+
+    .session-text,
+    .time-text,
+    .breakthrough-text {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .score-strong {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--blue);
+      letter-spacing: -0.03em;
+    }
+
+    .stage-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 74px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .dims {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dim {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .dim.s4, .dim.s5 { background: #ecf9f4; border-color: #cbeedc; }
+    .dim.s1, .dim.s2 { background: #fff7e7; border-color: #f2dfb7; }
+
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 14px 10px 28px; }
+      .toolbar, .stats-grid, .avg-grid, .table-wrap { border-radius: 16px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .badge { margin-left: 0; }
+      .toolbar h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="toolbar">
+      <h1>一人公司准备度自评卡 · 后台看板</h1>
+      <input id="sessionInput" type="text" placeholder="按场次标签筛选（选填）" />
+      <button class="btn" type="button" onclick="loadData()">刷新</button>
+      <a class="link-btn" href="./index.html">评分卡首页</a>
+      <a class="link-btn" href="https://github.com/waterhuangfu-art/ai-score-card/issues" target="_blank" rel="noreferrer">GitHub Issues →</a>
+      <div class="badge" id="countBadge">加载中…</div>
+      <div class="toolbar-copy">后台直接读取 GitHub Issues，只统计这套一人公司准备度自评卡数据。</div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid" style="display:none">
+      <div class="stat">
+        <div class="stat-label">平均总分</div>
+        <div class="stat-value" id="avgTotal">—</div>
+        <div class="stat-sub">满分 25 分</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">参与人数</div>
+        <div class="stat-value" id="totalCount">—</div>
+        <div class="stat-sub">当前筛选结果</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">最高分</div>
+        <div class="stat-value" id="maxScore">—</div>
+        <div class="stat-sub">当前最高</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">最低分</div>
+        <div class="stat-value" id="minScore">—</div>
+        <div class="stat-sub">当前最低</div>
+      </div>
+    </div>
+
+    <div class="avg-grid" id="avgGrid" style="display:none">
+      <div class="avg-head">
+        <h2>维度均分与阶段分布</h2>
+        <span>五维简称：经 / 交 / 工 / 品 / 财</span>
+      </div>
+      <div class="avg-row" id="avgRow"></div>
+      <div class="stage-row" id="stageRow" style="margin-top:12px"></div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="state-box" id="stateBox"><div class="spinner"></div><br />加载中…</div>
+      <table id="dataTable" style="display:none">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>场次</th>
+            <th>总分</th>
+            <th>阶段</th>
+            <th>五维</th>
+            <th>最想突破</th>
+            <th>提交时间</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const REPO = 'waterhuangfu-art/ai-score-card';
+    const BASE_LABEL = 'opc-self-card';
+    const ISSUE_PREFIX = '[OPC自评]';
+
+    const stageClassMap = {
+      '观望期': 'watch',
+      '准备期': 'ready',
+      '启动期': 'start',
+      '加速期': 'fast'
+    };
+
+    const dims = [
+      { key: 'experience', label: '行业经验深度', short: '经' },
+      { key: 'delivery', label: '可复制的交付能力', short: '交' },
+      { key: 'tools', label: '工具 / AI 使用能力', short: '工' },
+      { key: 'brand', label: '个人品牌 / 流量', short: '品' },
+      { key: 'finance', label: '财务准备度', short: '财' }
+    ];
+
+    function escapeRegExp(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function getTableValue(body, label) {
+      const re = new RegExp(`\\|\\s*${escapeRegExp(label)}\\s*\\|\\s*(.+?)\\s*\\|`);
+      const match = body.match(re);
+      return match ? match[1].replace(/\*\*/g, '').trim() : '';
+    }
+
+    function getSectionList(body, title) {
+      const re = new RegExp(`##\\s+${escapeRegExp(title)}\\n([\\s\\S]*?)(?:\\n##\\s+|$)`);
+      const match = body.match(re);
+      if (!match) return [];
+      return match[1]
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('- '))
+        .map((line) => line.slice(2).trim())
+        .filter(Boolean);
+    }
+
+    function parseIssue(issue) {
+      const body = issue.body || '';
+      return {
+        number: issue.number,
+        url: issue.html_url,
+        name: getTableValue(body, '姓名'),
+        session: getTableValue(body, '场次'),
+        total: parseInt(getTableValue(body, '总分'), 10) || 0,
+        stage: getTableValue(body, '阶段'),
+        experience: parseInt(getTableValue(body, '行业经验深度'), 10) || 0,
+        delivery: parseInt(getTableValue(body, '可复制的交付能力'), 10) || 0,
+        tools: parseInt(getTableValue(body, '工具 / AI 使用能力'), 10) || 0,
+        brand: parseInt(getTableValue(body, '个人品牌 / 流量'), 10) || 0,
+        finance: parseInt(getTableValue(body, '财务准备度'), 10) || 0,
+        breakthroughs: getSectionList(body, '最想突破'),
+        createdAt: issue.created_at
+      };
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function esc(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function renderStagePill(stage) {
+      const cls = stageClassMap[stage] || '';
+      return `<span class="stage-inline stage-chip ${cls}">${esc(stage || '—')}</span>`;
+    }
+
+    function renderDimChips(record) {
+      return dims.map((dim) => {
+        const score = record[dim.key] || 0;
+        return `<div class="dim s${score}">${score || '—'}</div>`;
+      }).join('');
+    }
+
+    function applyQueryDefaults() {
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session');
+      if (session) {
+        document.getElementById('sessionInput').value = session;
+      }
+    }
+
+    async function loadData() {
+      const stateBox = document.getElementById('stateBox');
+      const dataTable = document.getElementById('dataTable');
+      const statsGrid = document.getElementById('statsGrid');
+      const avgGrid = document.getElementById('avgGrid');
+
+      stateBox.style.display = 'block';
+      stateBox.innerHTML = '<div class="spinner"></div><br />加载中…';
+      dataTable.style.display = 'none';
+      statsGrid.style.display = 'none';
+      avgGrid.style.display = 'none';
+
+      const session = document.getElementById('sessionInput').value.trim();
+      const labels = [BASE_LABEL];
+      if (session) labels.push(session);
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&labels=${encodeURIComponent(labels.join(','))}`,
+          { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        const issues = await res.json();
+        if (!res.ok) throw new Error(issues.message || `GitHub API 返回 ${res.status}`);
+
+        const records = issues
+          .filter((issue) => issue.title && issue.title.startsWith(ISSUE_PREFIX))
+          .map(parseIssue)
+          .sort((a, b) => (b.total - a.total) || (new Date(b.createdAt) - new Date(a.createdAt)));
+
+        document.getElementById('countBadge').textContent = `${records.length} 条记录`;
+
+        if (records.length === 0) {
+          stateBox.textContent = '暂无数据，等待参与者提交';
+          return;
+        }
+
+        const totals = records.map((item) => item.total);
+        document.getElementById('avgTotal').textContent = (totals.reduce((sum, value) => sum + value, 0) / records.length).toFixed(1);
+        document.getElementById('totalCount').textContent = records.length;
+        document.getElementById('maxScore').textContent = Math.max(...totals);
+        document.getElementById('minScore').textContent = Math.min(...totals);
+        statsGrid.style.display = 'grid';
+
+        const avgRow = document.getElementById('avgRow');
+        avgRow.innerHTML = dims.map((dim) => {
+          const avg = (records.reduce((sum, item) => sum + (item[dim.key] || 0), 0) / records.length).toFixed(1);
+          return `<div class="avg-chip">${dim.short} · ${dim.label}：${avg}</div>`;
+        }).join('');
+
+        const stageCounts = {};
+        records.forEach((item) => {
+          stageCounts[item.stage] = (stageCounts[item.stage] || 0) + 1;
+        });
+
+        document.getElementById('stageRow').innerHTML = ['观望期', '准备期', '启动期', '加速期']
+          .map((stage) => {
+            const count = stageCounts[stage] || 0;
+            if (!count) return '';
+            return `<div class="stage-chip ${stageClassMap[stage] || ''}">${stage} × ${count}</div>`;
+          }).join('');
+        avgGrid.style.display = 'block';
+
+        document.getElementById('tableBody').innerHTML = records.map((record) => `
+          <tr>
+            <td><a class="name-link" href="${record.url}" target="_blank" rel="noreferrer">${esc(record.name || '—')}</a></td>
+            <td class="session-text">${esc(record.session || '—')}</td>
+            <td class="score-strong">${record.total}</td>
+            <td>${renderStagePill(record.stage)}</td>
+            <td><div class="dims">${renderDimChips(record)}</div></td>
+            <td class="breakthrough-text" title="${esc(record.breakthroughs.join(' / '))}">${esc(record.breakthroughs.join(' / ') || '—')}</td>
+            <td class="time-text">${fmtTime(record.createdAt)}</td>
+          </tr>
+        `).join('');
+
+        stateBox.style.display = 'none';
+        dataTable.style.display = 'table';
+      } catch (err) {
+        stateBox.textContent = `加载失败：${err.message}`;
+      }
+    }
+
+    applyQueryDefaults();
+    loadData();
+  </script>
+</body>
+</html>
