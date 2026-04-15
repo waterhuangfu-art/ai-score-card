@@ -191,9 +191,13 @@
       const session = document.getElementById('sessionInput').value.trim();
 
       try {
+        const requestUrl = `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&t=${Date.now()}`;
         const res = await fetch(
-          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100`,
-          { headers: { 'Accept': 'application/vnd.github+json' } }
+          requestUrl,
+          {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/vnd.github+json' }
+          }
         );
         if (!res.ok) throw new Error('GitHub API 返回 ' + res.status);
         const issues = await res.json();
