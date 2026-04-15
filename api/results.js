@@ -65,12 +65,10 @@ export default async function handler(req, res) {
   }
 
   const session = String(req.query?.session || '').trim();
-  const labels = [BASE_LABEL];
-  if (session) labels.push(session);
 
   try {
     const githubRes = await fetch(
-      `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&labels=${encodeURIComponent(labels.join(','))}`,
+      `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&labels=${encodeURIComponent(BASE_LABEL)}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -88,6 +86,7 @@ export default async function handler(req, res) {
     const records = issues
       .filter((issue) => issue.title && issue.title.startsWith(ISSUE_PREFIX))
       .map(parseIssue)
+      .filter((record) => !session || record.session === session)
       .sort((a, b) => (b.total - a.total) || (new Date(b.createdAt) - new Date(a.createdAt)));
 
     const totals = records.map((item) => item.total);

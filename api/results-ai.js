@@ -73,13 +73,8 @@ export default async function handler(req, res) {
 
     const records = issues
       .filter((issue) => issue.title && issue.title.startsWith(ISSUE_PREFIX))
-      .filter((issue) => {
-        if (!session) return true;
-        const labelNames = Array.isArray(issue.labels) ? issue.labels.map((item) => item.name) : [];
-        const parsed = parseIssue(issue);
-        return labelNames.includes(session) || parsed.session === session;
-      })
       .map(parseIssue)
+      .filter((record) => !session || record.session === session)
       .sort((a, b) => (b.total - a.total) || (new Date(b.createdAt) - new Date(a.createdAt)));
 
     const totals = records.map((item) => item.total);

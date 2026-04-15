@@ -189,18 +189,23 @@
       document.getElementById('stageRow').style.display = 'none';
 
       const session = document.getElementById('sessionInput').value.trim();
-      const labelParam = session ? `&labels=${encodeURIComponent(session)}` : '';
 
       try {
         const res = await fetch(
-          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100${labelParam}`,
+          `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100`,
           { headers: { 'Accept': 'application/vnd.github+json' } }
         );
         if (!res.ok) throw new Error('GitHub API 返回 ' + res.status);
         const issues = await res.json();
 
         // Filter only scoring issues
-        const scoringIssues = issues.filter(i => i.title.startsWith('[评分]'));
+        const scoringIssues = issues.filter((issue) => {
+          if (!issue.title.startsWith('[评分]')) return false;
+          if (!session) return true;
+          const labels = Array.isArray(issue.labels) ? issue.labels.map((item) => item.name) : [];
+          const parsed = parseIssue(issue);
+          return parsed.session === session || labels.includes(session);
+        });
         const records = scoringIssues.map(parseIssue);
 
         document.getElementById('countBadge').textContent = `${records.length} 条记录`;
