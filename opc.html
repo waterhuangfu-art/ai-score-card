@@ -730,10 +730,16 @@
           </div>
 
           <button class="submit-btn" type="submit" id="submitBtn">提交我的自评卡</button>
-          <div class="submit-tip">提交后会进入后台汇总，便于现场看到整体分布和大家最想突破的方向。</div>
+          <div class="submit-tip">提交后只显示你自己的结果，不展示其他人的信息。</div>
           <div class="message" id="formMessage"></div>
         </div>
       </aside>
+    </form>
+
+    <iframe name="submitTransportFrame" id="submitTransportFrame" hidden></iframe>
+    <form id="submitTransportForm" hidden method="post" target="submitTransportFrame">
+      <input type="hidden" name="payload" id="submitTransportPayload" />
+      <input type="hidden" name="origin" id="submitTransportOrigin" />
     </form>
   </div>
 
@@ -806,9 +812,13 @@
       }
     ];
 
-    const API_BASE = window.location.hostname.endsWith('github.io')
+    const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
+    const API_BASE = IS_GITHUB_PAGES
       ? 'https://ai-score-card.vercel.app'
       : '';
+    const API_ORIGIN = API_BASE ? new URL(API_BASE).origin : window.location.origin;
+    const SUBMIT_TIMEOUT_MS = 15000;
+    const SUBMIT_MESSAGE_TYPE = 'opc-submit-result';
 
     const breakthroughs = [
       '找到第一个付费客户',
@@ -961,6 +971,98 @@
       el.textContent = text;
     }
 
+    function renderSubmitSuccess(total, stageLabel) {
+      const banner = document.getElementById('successBanner');
+      banner.style.display = 'block';
+      banner.innerHTML = `<strong>提交成功</strong>你的结果已保存。当前总分 ${total} / 25，阶段为 ${stageLabel}。此页面只显示你自己的信息。`;
+    }
+
+    function normalizeSubmitError(error) {
+      if (error && error.name === 'AbortError') {
+        return new Error('提交超时，请稍后重试。');
+      }
+      return error instanceof Error ? error : new Error('提交失败，请稍后再试');
+    }
+
+    function submitViaFetch(endpoint, payload) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
+
+      return fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || '提交失败，请稍后再试');
+          }
+          return data;
+        })
+        .finally(() => {
+          clearTimeout(timer);
+        });
+    }
+
+    function submitViaIframe(endpoint, payload) {
+      return new Promise((resolve, reject) => {
+        const form = document.getElementById('submitTransportForm');
+        const payloadInput = document.getElementById('submitTransportPayload');
+        const originInput = document.getElementById('submitTransportOrigin');
+        const frame = document.getElementById('submitTransportFrame');
+        let settled = false;
+
+        const cleanup = () => {
+          window.removeEventListener('message', onMessage);
+          clearTimeout(timer);
+        };
+
+        const finish = (err, data) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        };
+
+        const onMessage = (event) => {
+          if (event.origin !== API_ORIGIN) return;
+          const data = event.data || {};
+          if (data.type !== SUBMIT_MESSAGE_TYPE) return;
+
+          if (!data.success) {
+            finish(new Error(data.error || '提交失败，请稍后再试'));
+            return;
+          }
+
+          finish(null, data);
+        };
+
+        const timer = setTimeout(() => {
+          finish(new Error('提交超时，请稍后重试。'));
+        }, SUBMIT_TIMEOUT_MS);
+
+        window.addEventListener('message', onMessage);
+        payloadInput.value = JSON.stringify({ ...payload, origin: window.location.origin });
+        originInput.value = window.location.origin;
+        form.action = `${API_BASE}${endpoint}?mode=iframe`;
+        frame.src = 'about:blank';
+        form.submit();
+      });
+    }
+
+    function submitToBackend(endpoint, payload) {
+      if (IS_GITHUB_PAGES && API_BASE) {
+        return submitViaIframe(endpoint, payload);
+      }
+      return submitViaFetch(endpoint, payload);
+    }
+
     function validateBreakthroughSelection(changedInput) {
       const fixedChecked = Array.from(document.querySelectorAll('input[name="breakthrough"]:checked'));
       if (fixedChecked.length <= 2) return true;
@@ -1012,22 +1114,13 @@
       btn.textContent = '提交中...';
 
       try {
-        const res = await fetch(`${API_BASE}/api/submit-opc`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '提交失败，请稍后再试');
-
-        const banner = document.getElementById('successBanner');
-        banner.style.display = 'block';
-        banner.innerHTML = `<strong>提交成功</strong>你的自评卡已经进入后台。当前总分 ${total} / 25，阶段为 ${stageConfig[stageKey].label}。Issue #${data.issueNumber || '—'}`;
-
-        setMessage('success', `提交成功，已写入后台。你的阶段：${stageConfig[stageKey].label}`);
+        await submitToBackend('/api/submit-opc', payload);
+        renderSubmitSuccess(total, stageConfig[stageKey].label);
+        setMessage('success', `提交成功。你的阶段：${stageConfig[stageKey].label}`);
         document.getElementById('scoreForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
-        setMessage('error', err.message || '提交失败，请稍后再试');
+        const friendlyError = normalizeSubmitError(err);
+        setMessage('error', friendlyError.message);
       } finally {
         btn.disabled = false;
         btn.textContent = '提交我的自评卡';

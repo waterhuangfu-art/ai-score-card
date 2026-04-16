@@ -699,6 +699,12 @@
     <div class="bottom-space"></div>
   </div>
 
+  <iframe name="submitTransportFrame" id="submitTransportFrame" hidden></iframe>
+  <form id="submitTransportForm" hidden method="post" target="submitTransportFrame">
+    <input type="hidden" name="payload" id="submitTransportPayload" />
+    <input type="hidden" name="origin" id="submitTransportOrigin" />
+  </form>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
@@ -747,9 +753,13 @@
 
   <script>
     // State
-    const API_BASE = window.location.hostname.endsWith('github.io')
+    const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
+    const API_BASE = IS_GITHUB_PAGES
       ? 'https://ai-score-card.vercel.app'
       : '';
+    const API_ORIGIN = API_BASE ? new URL(API_BASE).origin : window.location.origin;
+    const SUBMIT_TIMEOUT_MS = 15000;
+    const SUBMIT_MESSAGE_TYPE = 'ai-submit-result';
 
     const scores = { frequency: 0, coverage: 0, depth: 0, result: 0, system: 0 };
     const dimKeys = ['frequency', 'coverage', 'depth', 'result', 'system'];
@@ -826,6 +836,92 @@
       el.className = 'toast show' + (type ? ' ' + type : '');
       clearTimeout(el._timer);
       el._timer = setTimeout(() => { el.className = 'toast'; }, 3000);
+    }
+
+    function normalizeSubmitError(error) {
+      if (error && error.name === 'AbortError') {
+        return new Error('提交超时，请稍后重试');
+      }
+      return error instanceof Error ? error : new Error('提交失败，请稍后再试');
+    }
+
+    function submitViaFetch(endpoint, payload) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
+
+      return fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || '提交失败');
+          }
+          return data;
+        })
+        .finally(() => {
+          clearTimeout(timer);
+        });
+    }
+
+    function submitViaIframe(endpoint, payload) {
+      return new Promise((resolve, reject) => {
+        const form = document.getElementById('submitTransportForm');
+        const payloadInput = document.getElementById('submitTransportPayload');
+        const originInput = document.getElementById('submitTransportOrigin');
+        const frame = document.getElementById('submitTransportFrame');
+        let settled = false;
+
+        const cleanup = () => {
+          window.removeEventListener('message', onMessage);
+          clearTimeout(timer);
+        };
+
+        const finish = (err, data) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        };
+
+        const onMessage = (event) => {
+          if (event.origin !== API_ORIGIN) return;
+          const data = event.data || {};
+          if (data.type !== SUBMIT_MESSAGE_TYPE) return;
+
+          if (!data.success) {
+            finish(new Error(data.error || '提交失败'));
+            return;
+          }
+
+          finish(null, data);
+        };
+
+        const timer = setTimeout(() => {
+          finish(new Error('提交超时，请稍后重试'));
+        }, SUBMIT_TIMEOUT_MS);
+
+        window.addEventListener('message', onMessage);
+        payloadInput.value = JSON.stringify({ ...payload, origin: window.location.origin });
+        originInput.value = window.location.origin;
+        form.action = `${API_BASE}${endpoint}?mode=iframe`;
+        frame.src = 'about:blank';
+        form.submit();
+      });
+    }
+
+    function submitToBackend(endpoint, payload) {
+      if (IS_GITHUB_PAGES && API_BASE) {
+        return submitViaIframe(endpoint, payload);
+      }
+      return submitViaFetch(endpoint, payload);
     }
 
     // Validate
@@ -929,21 +1025,13 @@
       btn.innerHTML = '<span class="loading"></span>提交中';
 
       try {
-        const res = await fetch(`${API_BASE}/api/submit-ai`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showToast('已记录！记得把图片保存到手机相册 🎉', 'success');
-          btn.textContent = '已提交 ✓';
-          btn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
-        } else {
-          throw new Error(data.error || '提交失败');
-        }
+        await submitToBackend('/api/submit-ai', payload);
+        showToast('已提交。当前页面只显示你自己的结果', 'success');
+        btn.textContent = '已提交 ✓';
+        btn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
       } catch (e) {
-        showToast('提交失败：' + e.message, 'error');
+        const friendlyError = normalizeSubmitError(e);
+        showToast('提交失败：' + friendlyError.message, 'error');
         btn.disabled = false;
         btn.textContent = '提交数据';
       }

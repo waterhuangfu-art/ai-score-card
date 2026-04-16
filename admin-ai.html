@@ -136,6 +136,7 @@
 
   <script>
     const REPO = 'waterhuangfu-art/ai-score-card';
+    const BASE_LABEL = 'ai-score-card';
 
     const stageMap = { '尝鲜期':'s1', '工具期':'s2', '系统期':'s3', '杠杆期':'s4' };
 
@@ -150,6 +151,7 @@
         number: issue.number,
         url: issue.html_url,
         name: get('姓名'),
+        session: get('场次'),
         total: parseInt(get('总分')) || 0,
         stage: get('阶段'),
         frequency: parseInt(get('使用频率')) || 0,
@@ -191,7 +193,7 @@
       const session = document.getElementById('sessionInput').value.trim();
 
       try {
-        const requestUrl = `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&t=${Date.now()}`;
+        const requestUrl = `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&labels=${encodeURIComponent(BASE_LABEL)}&t=${Date.now()}`;
         const res = await fetch(
           requestUrl,
           {

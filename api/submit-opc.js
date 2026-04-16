@@ -1,6 +1,7 @@
 const REPO = 'waterhuangfu-art/ai-score-card';
 const BASE_LABEL = 'opc-self-card';
 const ISSUE_PREFIX = '[OPC自评]';
+const MESSAGE_TYPE = 'opc-submit-result';
 
 const ipTimes = new Map();
 
@@ -35,6 +36,92 @@ function normalizeScore(value) {
   return Number.isInteger(num) && num >= 1 && num <= 5 ? num : 0;
 }
 
+function parseRequestBody(req) {
+  const body = req.body;
+
+  if (!body) return {};
+
+  if (typeof body === 'string') {
+    const raw = body.trim();
+    if (!raw) return {};
+
+    if (raw.startsWith('{')) {
+      return JSON.parse(raw);
+    }
+
+    const params = new URLSearchParams(raw);
+    const payload = params.get('payload');
+    if (payload) {
+      const parsed = JSON.parse(payload);
+      const origin = params.get('origin');
+      if (origin && !parsed.origin) parsed.origin = origin;
+      return parsed;
+    }
+
+    return Object.fromEntries(params.entries());
+  }
+
+  if (typeof body === 'object') {
+    if (typeof body.payload === 'string') {
+      const parsed = JSON.parse(body.payload);
+      if (body.origin && !parsed.origin) parsed.origin = body.origin;
+      return parsed;
+    }
+
+    return body;
+  }
+
+  return {};
+}
+
+function normalizeOrigin(value) {
+  const input = String(value || '').trim();
+  if (!input) return '';
+
+  try {
+    return new URL(input).origin;
+  } catch {
+    return '';
+  }
+}
+
+function getRequestOrigin(req, payload) {
+  return (
+    normalizeOrigin(payload?.origin) ||
+    normalizeOrigin(req.headers.origin) ||
+    normalizeOrigin(req.headers.referer)
+  );
+}
+
+function wantsIframeResponse(req) {
+  return String(req.query?.mode || '').toLowerCase() === 'iframe';
+}
+
+function sendIframeResponse(res, req, payload, status) {
+  const targetOrigin = getRequestOrigin(req, payload) || '*';
+  const message = { ...payload, type: MESSAGE_TYPE };
+
+  res.status(status);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8" /><title>提交结果</title></head>
+<body>
+<script>
+  window.parent && window.parent.postMessage(${JSON.stringify(message)}, ${JSON.stringify(targetOrigin)});
+</script>
+</body>
+</html>`);
+}
+
+function respond(res, req, payload, status, data) {
+  if (wantsIframeResponse(req)) {
+    return sendIframeResponse(res, req, data, status);
+  }
+
+  return res.status(status).json(data);
+}
+
 async function ensureLabel(token, name, color) {
   const response = await fetch(`https://api.github.com/repos/${REPO}/labels`, {
     method: 'POST',
@@ -60,16 +147,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  if (isRateLimited(ip)) {
-    return res.status(429).json({ error: '提交太频繁，请稍后再试' });
-  }
-
   let payload;
   try {
-    payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    payload = parseRequestBody(req);
   } catch {
-    return res.status(400).json({ error: '请求格式错误' });
+    return respond(res, req, {}, 400, { success: false, error: '请求格式错误' });
+  }
+
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(ip)) {
+    return respond(res, req, payload, 429, { success: false, error: '提交太频繁，请稍后再试' });
   }
 
   const dimensions = [
@@ -91,7 +178,7 @@ export default async function handler(req, res) {
   }
 
   if (Object.values(scores).some((score) => !score)) {
-    return res.status(400).json({ error: '请先完成全部五个维度的评分' });
+    return respond(res, req, payload, 400, { success: false, error: '请先完成全部五个维度的评分' });
   }
 
   const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
@@ -103,12 +190,12 @@ export default async function handler(req, res) {
     : [];
 
   if (!name) {
-    return res.status(400).json({ error: '姓名不能为空' });
+    return respond(res, req, payload, 400, { success: false, error: '姓名不能为空' });
   }
 
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
-    return res.status(500).json({ error: '服务器未配置，请联系管理员' });
+    return respond(res, req, payload, 500, { success: false, error: '服务器未配置，请联系管理员' });
   }
 
   const issueTitle = `${ISSUE_PREFIX} ${name} · ${total}分 · ${stage}`;
@@ -175,7 +262,7 @@ ${breakthroughSection}
       throw new Error(issue.message || '创建 Issue 失败');
     }
 
-    return res.status(200).json({
+    return respond(res, req, payload, 200, {
       success: true,
       issueNumber: issue.number,
       total,
@@ -183,6 +270,6 @@ ${breakthroughSection}
     });
   } catch (err) {
     console.error('GitHub API error:', err.message);
-    return res.status(500).json({ error: '提交失败，请重试' });
+    return respond(res, req, payload, 500, { success: false, error: '提交失败，请重试' });
   }
 }
