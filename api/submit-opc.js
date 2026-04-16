@@ -116,7 +116,7 @@ function sendIframeResponse(res, req, payload, status) {
 
 function respond(res, req, payload, status, data) {
   if (wantsIframeResponse(req)) {
-    return sendIframeResponse(res, req, data, status);
+    return sendIframeResponse(res, req, { ...data, origin: payload?.origin }, status);
   }
 
   return res.status(status).json(data);

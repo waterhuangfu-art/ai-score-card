@@ -758,7 +758,7 @@
       ? 'https://ai-score-card.vercel.app'
       : '';
     const API_ORIGIN = API_BASE ? new URL(API_BASE).origin : window.location.origin;
-    const SUBMIT_TIMEOUT_MS = 15000;
+    const SUBMIT_TIMEOUT_MS = 30000;
     const SUBMIT_MESSAGE_TYPE = 'ai-submit-result';
 
     const scores = { frequency: 0, coverage: 0, depth: 0, result: 0, system: 0 };
@@ -917,11 +917,15 @@
       });
     }
 
-    function submitToBackend(endpoint, payload) {
-      if (IS_GITHUB_PAGES && API_BASE) {
+    async function submitToBackend(endpoint, payload) {
+      try {
+        return await submitViaFetch(endpoint, payload);
+      } catch (error) {
+        if (!IS_GITHUB_PAGES || !API_BASE) {
+          throw error;
+        }
         return submitViaIframe(endpoint, payload);
       }
-      return submitViaFetch(endpoint, payload);
     }
 
     // Validate

@@ -288,6 +288,15 @@
       color: var(--muted);
       line-height: 1.55;
     }
+    .actions-cell { white-space: nowrap; }
+    .action-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 58px; height: 32px; padding: 0 12px; margin-right: 8px;
+      border-radius: 8px; border: 1px solid var(--line); background: #fff;
+      color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .action-btn.primary { color: var(--blue); background: var(--soft); }
+    .action-btn.danger { color: #c2410c; background: #fff7ed; border-color: #fed7aa; }
 
     .score-strong {
       font-size: 22px;
@@ -328,6 +337,45 @@
 
     .dim.s4, .dim.s5 { background: #ecf9f4; border-color: #cbeedc; }
     .dim.s1, .dim.s2 { background: #fff7e7; border-color: #f2dfb7; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.42);
+      display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: min(980px, 100%); max-height: min(88vh, 980px); overflow: auto;
+      background: #fff; border-radius: 20px; box-shadow: 0 28px 80px rgba(15,23,42,0.18); padding: 22px;
+    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .modal-head h2 { font-size: 20px; font-weight: 800; }
+    .modal-close {
+      width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); cursor: pointer; font-size: 18px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.span-2 { grid-column: 1 / -1; }
+    .field label { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .field input, .field select, .field textarea {
+      width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      font: inherit; color: var(--text); background: #fff; outline: none;
+    }
+    .field textarea { min-height: 88px; resize: vertical; line-height: 1.55; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .modal-btn {
+      height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .modal-btn.primary { background: linear-gradient(135deg, var(--blue), var(--blue-2)); color: #fff; border-color: transparent; }
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; background: #162033; color: #fff;
+      padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; display: none; z-index: 1200;
+      box-shadow: 0 16px 40px rgba(15,23,42,0.22);
+    }
+    .toast.show { display: block; }
+    .toast.success { background: #0f8d5b; }
+    .toast.error { background: #b42318; }
 
     @media (max-width: 1024px) {
       .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -398,6 +446,7 @@
             <th>五维</th>
             <th>最想突破</th>
             <th>提交时间</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -405,10 +454,52 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="editModal" onclick="handleModalBackdrop(event)">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="modal-head">
+        <h2 id="editTitle">编辑 OPC 记录</h2>
+        <button class="modal-close" type="button" onclick="closeEditModal()">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="editName">姓名</label>
+          <input id="editName" type="text" maxlength="24" />
+        </div>
+        <div class="field">
+          <label for="editSession">场次</label>
+          <input id="editSession" type="text" maxlength="40" />
+        </div>
+        <div class="field"><label for="editExperience">行业经验深度</label><select id="editExperience"></select></div>
+        <div class="field span-2"><label for="editReasonExperience">行业经验理由</label><textarea id="editReasonExperience"></textarea></div>
+        <div class="field"><label for="editDelivery">可复制的交付能力</label><select id="editDelivery"></select></div>
+        <div class="field span-2"><label for="editReasonDelivery">交付理由</label><textarea id="editReasonDelivery"></textarea></div>
+        <div class="field"><label for="editTools">工具 / AI 使用能力</label><select id="editTools"></select></div>
+        <div class="field span-2"><label for="editReasonTools">工具理由</label><textarea id="editReasonTools"></textarea></div>
+        <div class="field"><label for="editBrand">个人品牌 / 流量</label><select id="editBrand"></select></div>
+        <div class="field span-2"><label for="editReasonBrand">品牌理由</label><textarea id="editReasonBrand"></textarea></div>
+        <div class="field"><label for="editFinance">财务准备度</label><select id="editFinance"></select></div>
+        <div class="field span-2"><label for="editReasonFinance">财务理由</label><textarea id="editReasonFinance"></textarea></div>
+        <div class="field span-2">
+          <label for="editBreakthroughs">最想突破</label>
+          <textarea id="editBreakthroughs" placeholder="每行一个条目"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" type="button" onclick="closeEditModal()">取消</button>
+        <button class="modal-btn primary" type="button" id="saveBtn" onclick="saveEdit()">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
   <script>
     const REPO = 'waterhuangfu-art/ai-score-card';
     const BASE_LABEL = 'opc-self-card';
     const ISSUE_PREFIX = '[OPC自评]';
+    const API_BASE = 'https://ai-score-card.vercel.app';
+    let currentRecords = [];
+    let currentEditing = null;
 
     const stageClassMap = {
       '观望期': 'watch',
@@ -447,6 +538,12 @@
         .filter(Boolean);
     }
 
+    function getDimensionReason(body, label) {
+      const re = new RegExp(`\\|\\s*${escapeRegExp(label)}\\s*\\|\\s*.+?\\|\\s*(.+?)\\s*\\|`);
+      const match = body.match(re);
+      return match ? match[1].replace(/\*\*/g, '').trim() : '';
+    }
+
     function parseIssue(issue) {
       const body = issue.body || '';
       return {
@@ -461,6 +558,11 @@
         tools: parseInt(getTableValue(body, '工具 / AI 使用能力'), 10) || 0,
         brand: parseInt(getTableValue(body, '个人品牌 / 流量'), 10) || 0,
         finance: parseInt(getTableValue(body, '财务准备度'), 10) || 0,
+        reasonExperience: getDimensionReason(body, '行业经验深度'),
+        reasonDelivery: getDimensionReason(body, '可复制的交付能力'),
+        reasonTools: getDimensionReason(body, '工具 / AI 使用能力'),
+        reasonBrand: getDimensionReason(body, '个人品牌 / 流量'),
+        reasonFinance: getDimensionReason(body, '财务准备度'),
         breakthroughs: getSectionList(body, '最想突破'),
         createdAt: issue.created_at
       };
@@ -477,6 +579,130 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+    }
+
+    function showToast(text, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = text;
+      el.className = `toast show${type ? ' ' + type : ''}`;
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.className = 'toast'; }, 3000);
+    }
+
+    function buildScoreOptions() {
+      const html = ['<option value="">请选择</option>']
+        .concat([1,2,3,4,5].map((score) => `<option value="${score}">${score} 分</option>`))
+        .join('');
+      ['editExperience', 'editDelivery', 'editTools', 'editBrand', 'editFinance'].forEach((id) => {
+        document.getElementById(id).innerHTML = html;
+      });
+    }
+
+    function handleModalBackdrop(event) {
+      if (event.target.id === 'editModal') {
+        closeEditModal();
+      }
+    }
+
+    function openEditModal(issueNumber) {
+      currentEditing = currentRecords.find((item) => item.number === issueNumber) || null;
+      if (!currentEditing) {
+        showToast('未找到对应记录', 'error');
+        return;
+      }
+
+      document.getElementById('editName').value = currentEditing.name || '';
+      document.getElementById('editSession').value = currentEditing.session || '';
+      document.getElementById('editExperience').value = currentEditing.experience || '';
+      document.getElementById('editDelivery').value = currentEditing.delivery || '';
+      document.getElementById('editTools').value = currentEditing.tools || '';
+      document.getElementById('editBrand').value = currentEditing.brand || '';
+      document.getElementById('editFinance').value = currentEditing.finance || '';
+      document.getElementById('editReasonExperience').value = currentEditing.reasonExperience || '';
+      document.getElementById('editReasonDelivery').value = currentEditing.reasonDelivery || '';
+      document.getElementById('editReasonTools').value = currentEditing.reasonTools || '';
+      document.getElementById('editReasonBrand').value = currentEditing.reasonBrand || '';
+      document.getElementById('editReasonFinance').value = currentEditing.reasonFinance || '';
+      document.getElementById('editBreakthroughs').value = (currentEditing.breakthroughs || []).join('\n');
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      currentEditing = null;
+      document.getElementById('editModal').classList.remove('open');
+    }
+
+    function collectEditPayload() {
+      return {
+        action: 'update',
+        issueNumber: currentEditing.number,
+        name: document.getElementById('editName').value.trim(),
+        session: document.getElementById('editSession').value.trim(),
+        scores: {
+          experience: Number(document.getElementById('editExperience').value),
+          delivery: Number(document.getElementById('editDelivery').value),
+          tools: Number(document.getElementById('editTools').value),
+          brand: Number(document.getElementById('editBrand').value),
+          finance: Number(document.getElementById('editFinance').value)
+        },
+        reasons: {
+          experience: document.getElementById('editReasonExperience').value.trim(),
+          delivery: document.getElementById('editReasonDelivery').value.trim(),
+          tools: document.getElementById('editReasonTools').value.trim(),
+          brand: document.getElementById('editReasonBrand').value.trim(),
+          finance: document.getElementById('editReasonFinance').value.trim()
+        },
+        breakthroughs: document.getElementById('editBreakthroughs').value
+          .split('\n')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      };
+    }
+
+    async function saveEdit() {
+      if (!currentEditing) return;
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/manage-opc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectEditPayload())
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.error || '保存失败');
+
+        closeEditModal();
+        await loadData();
+        showToast('记录已更新', 'success');
+      } catch (err) {
+        showToast(err.message || '保存失败', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存修改';
+      }
+    }
+
+    async function deleteRecord(issueNumber) {
+      if (!confirm('删除后这条记录会从后台列表中消失，继续吗？')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/manage-opc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', issueNumber })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.error || '删除失败');
+
+        await loadData();
+        showToast('记录已删除', 'success');
+      } catch (err) {
+        showToast(err.message || '删除失败', 'error');
+      }
     }
 
     function renderStagePill(stage) {
@@ -530,6 +756,7 @@
           .map(parseIssue)
           .filter((record) => !session || record.session === session)
           .sort((a, b) => (b.total - a.total) || (new Date(b.createdAt) - new Date(a.createdAt)));
+        currentRecords = records;
 
         document.getElementById('countBadge').textContent = `${records.length} 条记录`;
 
@@ -573,6 +800,10 @@
             <td><div class="dims">${renderDimChips(record)}</div></td>
             <td class="breakthrough-text" title="${esc(record.breakthroughs.join(' / '))}">${esc(record.breakthroughs.join(' / ') || '—')}</td>
             <td class="time-text">${fmtTime(record.createdAt)}</td>
+            <td class="actions-cell">
+              <button class="action-btn primary" type="button" onclick="openEditModal(${record.number})">修改</button>
+              <button class="action-btn danger" type="button" onclick="deleteRecord(${record.number})">删除</button>
+            </td>
           </tr>
         `).join('');
 
@@ -583,6 +814,7 @@
       }
     }
 
+    buildScoreOptions();
     applyQueryDefaults();
     loadData();
   </script>
