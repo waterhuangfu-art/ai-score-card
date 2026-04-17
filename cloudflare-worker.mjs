@@ -61,6 +61,21 @@ function getClientIp(request) {
   );
 }
 
+function githubHeaders(token, extraHeaders = {}) {
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'ai-score-card-worker',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...extraHeaders
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
 function isRateLimited(store, ip) {
   const now = Date.now();
   const windowMs = 5 * 60 * 1000;
@@ -146,11 +161,7 @@ function respond(request, url, payload, messageType, status, data) {
 async function ensureLabel(token, repo, name, color) {
   const response = await fetch(`https://api.github.com/repos/${repo}/labels`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    },
+    headers: githubHeaders(token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ name, color })
   });
 
@@ -163,11 +174,7 @@ async function ensureLabel(token, repo, name, color) {
 async function createIssue(token, repo, title, body, labels) {
   const response = await fetch(`https://api.github.com/repos/${repo}/issues`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    },
+    headers: githubHeaders(token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ title, body, labels })
   });
 
@@ -182,11 +189,7 @@ async function createIssue(token, repo, title, body, labels) {
 async function updateIssue(token, repo, issueNumber, payload) {
   const response = await fetch(`https://api.github.com/repos/${repo}/issues/${issueNumber}`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    },
+    headers: githubHeaders(token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload)
   });
 
@@ -208,17 +211,20 @@ async function listIssues(token, repo, label) {
     params.set('labels', label);
   }
 
-  const response = await fetch(`https://api.github.com/repos/${repo}/issues?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
+  let response = await fetch(`https://api.github.com/repos/${repo}/issues?${params.toString()}`, {
+    headers: githubHeaders(token)
   });
 
-  const issues = await response.json().catch(() => ([]));
+  let issues = await response.json().catch(() => null);
+  if (!response.ok && token && (response.status === 401 || response.status === 403)) {
+    response = await fetch(`https://api.github.com/repos/${repo}/issues?${params.toString()}`, {
+      headers: githubHeaders('')
+    });
+    issues = await response.json().catch(() => null);
+  }
+
   if (!response.ok) {
-    throw new Error(issues.message || '获取记录失败');
+    throw new Error(issues?.message || `获取记录失败（${response.status}）`);
   }
 
   return Array.isArray(issues) ? issues : [];
@@ -641,16 +647,12 @@ async function handleManage(request, builder, repoLabelColors, issuePrefix, env)
 }
 
 async function handleResultsAi(url, env) {
-  const token = env.GITHUB_TOKEN;
-  if (!token) {
-    return json({ error: '服务器未配置，请联系管理员' }, 500);
-  }
-
+  const token = env.GITHUB_TOKEN || '';
   const repo = env.REPO || DEFAULT_REPO;
   const session = cleanText(url.searchParams.get('session'), 40);
 
   try {
-    const issues = await listIssues(token, repo, 'ai-score-card');
+    const issues = await listIssues(token, repo, '');
     const records = issues
       .filter((issue) => issue.title && issue.title.startsWith('[评分]'))
       .map(parseAiIssue)
@@ -670,16 +672,12 @@ async function handleResultsAi(url, env) {
 }
 
 async function handleResultsOpc(url, env) {
-  const token = env.GITHUB_TOKEN;
-  if (!token) {
-    return json({ error: '服务器未配置，请联系管理员' }, 500);
-  }
-
+  const token = env.GITHUB_TOKEN || '';
   const repo = env.REPO || DEFAULT_REPO;
   const session = cleanText(url.searchParams.get('session'), 40);
 
   try {
-    const issues = await listIssues(token, repo, 'opc-self-card');
+    const issues = await listIssues(token, repo, '');
     const records = issues
       .filter((issue) => issue.title && issue.title.startsWith('[OPC自评]'))
       .map(parseOpcIssue)
