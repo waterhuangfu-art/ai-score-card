@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>后台 · AI含量评分卡</title>
+  <script src="./api-config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -225,7 +226,9 @@
   <script>
     const REPO = 'waterhuangfu-art/ai-score-card';
     const BASE_LABEL = 'ai-score-card';
-    const API_BASE = 'https://ai-score-card.vercel.app';
+    const API_BASE = typeof window.resolveScoreCardApiBase === 'function'
+      ? window.resolveScoreCardApiBase()
+      : window.location.origin;
     const SCORE_KEYS = ['frequency', 'coverage', 'depth', 'result', 'system'];
     let currentRecords = [];
     let currentEditing = null;
@@ -277,6 +280,15 @@
       el.className = `toast show${type ? ' ' + type : ''}`;
       clearTimeout(el._timer);
       el._timer = setTimeout(() => { el.className = 'toast'; }, 3000);
+    }
+
+    function ensureApiBaseConfigured() {
+      if (!API_BASE) {
+        throw new Error('未配置后台服务地址，请在 api-config.js 中设置 apiBase，或在链接后追加 ?api=你的接口地址');
+      }
+      if (window.location.protocol === 'https:' && /^http:\/\//i.test(API_BASE)) {
+        throw new Error('当前页面是 HTTPS，浏览器会拦截 HTTP 后台地址。请直接打开本地服务地址，而不是 GitHub Pages 页面。');
+      }
     }
 
     function buildScoreOptions() {
@@ -355,6 +367,7 @@
 
       try {
         const payload = collectEditPayload();
+        ensureApiBaseConfigured();
 
         const res = await fetch(`${API_BASE}/api/manage-ai`, {
           method: 'POST',
@@ -379,6 +392,7 @@
       if (!confirm('删除后这条记录会从后台列表中消失，继续吗？')) return;
 
       try {
+        ensureApiBaseConfigured();
         const res = await fetch(`${API_BASE}/api/manage-ai`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -412,47 +426,36 @@
       const session = document.getElementById('sessionInput').value.trim();
 
       try {
-        const requestUrl = `https://api.github.com/repos/${REPO}/issues?state=open&per_page=100&labels=${encodeURIComponent(BASE_LABEL)}&t=${Date.now()}`;
-        const res = await fetch(
-          requestUrl,
-          {
-            cache: 'no-store',
-            headers: { 'Accept': 'application/vnd.github+json' }
-          }
-        );
-        if (!res.ok) throw new Error('GitHub API 返回 ' + res.status);
-        const issues = await res.json();
+        ensureApiBaseConfigured();
+        const query = new URLSearchParams();
+        if (session) query.set('session', session);
 
-        // Filter only scoring issues
-        const scoringIssues = issues.filter((issue) => {
-          if (!issue.title.startsWith('[评分]')) return false;
-          if (!session) return true;
-          const labels = Array.isArray(issue.labels) ? issue.labels.map((item) => item.name) : [];
-          const parsed = parseIssue(issue);
-          return parsed.session === session || labels.includes(session);
-        });
-        const records = scoringIssues.map(parseIssue);
+        const requestUrl = `${API_BASE}/api/results-ai${query.toString() ? `?${query.toString()}` : ''}`;
+        const res = await fetch(requestUrl, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || ('后台接口返回 ' + res.status));
+
+        const records = Array.isArray(data.records) ? data.records : [];
         currentRecords = records;
 
         document.getElementById('countBadge').textContent = `${records.length} 条记录`;
 
         if (records.length === 0) {
+          document.getElementById('tableBody').innerHTML = '';
+          document.getElementById('stageRow').innerHTML = '';
           document.getElementById('stateBox').innerHTML = '暂无数据，等待参与者提交';
           return;
         }
 
         // Stats
-        const totals = records.map(r => r.total);
-        const avg = (totals.reduce((a,b)=>a+b,0) / totals.length).toFixed(1);
-        document.getElementById('statAvg').textContent = avg;
-        document.getElementById('statMax').textContent = Math.max(...totals);
-        document.getElementById('statMin').textContent = Math.min(...totals);
-        document.getElementById('statCount').textContent = records.length;
+        document.getElementById('statAvg').textContent = data.stats?.avgTotal ?? '0';
+        document.getElementById('statMax').textContent = data.stats?.maxScore ?? '0';
+        document.getElementById('statMin').textContent = data.stats?.minScore ?? '0';
+        document.getElementById('statCount').textContent = data.stats?.totalCount ?? records.length;
         document.getElementById('statsRow').style.display = 'flex';
 
         // Stage distribution
-        const stageCounts = {};
-        records.forEach(r => { stageCounts[r.stage] = (stageCounts[r.stage]||0)+1; });
+        const stageCounts = data.stageCounts || {};
         const stageRowEl = document.getElementById('stageRow');
         stageRowEl.innerHTML = ['尝鲜期','工具期','系统期','杠杆期'].map(s => {
           const c = stageCounts[s] || 0;

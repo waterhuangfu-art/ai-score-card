@@ -1,0 +1,23 @@
+pages:
+  stage: deploy
+  image: alpine:3.21
+  script:
+    - apk add --no-cache rsync
+    - mkdir -p public
+    - rsync -av ./ public/ \
+        --exclude public \
+        --exclude .git \
+        --exclude .gitlab \
+        --exclude .wrangler \
+        --exclude node_modules \
+        --exclude package-lock.json \
+        --exclude wrangler.toml \
+        --exclude wrangler.toml.example \
+        --exclude cloudflare-worker.mjs \
+        --exclude local-server.mjs \
+        --exclude start-public.mjs
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>一人公司准备度自评卡</title>
+  <script src="./api-config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -813,9 +814,9 @@
     ];
 
     const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
-    const API_BASE = IS_GITHUB_PAGES
-      ? 'https://ai-score-card.vercel.app'
-      : '';
+    const API_BASE = typeof window.resolveScoreCardApiBase === 'function'
+      ? window.resolveScoreCardApiBase()
+      : (IS_GITHUB_PAGES ? '' : window.location.origin);
     const API_ORIGIN = API_BASE ? new URL(API_BASE).origin : window.location.origin;
     const SUBMIT_TIMEOUT_MS = 30000;
     const SUBMIT_MESSAGE_TYPE = 'opc-submit-result';
@@ -984,7 +985,17 @@
       return error instanceof Error ? error : new Error('提交失败，请稍后再试');
     }
 
+    function ensureApiBaseConfigured() {
+      if (!API_BASE) {
+        throw new Error('未配置提交服务地址，请在 api-config.js 中设置 apiBase，或在链接后追加 ?api=你的接口地址');
+      }
+      if (window.location.protocol === 'https:' && /^http:\/\//i.test(API_BASE)) {
+        throw new Error('当前页面是 HTTPS，浏览器会拦截 HTTP 提交地址。请直接打开本地服务地址，而不是 GitHub Pages 页面。');
+      }
+    }
+
     function submitViaFetch(endpoint, payload) {
+      ensureApiBaseConfigured();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
 
@@ -1057,6 +1068,7 @@
     }
 
     async function submitToBackend(endpoint, payload) {
+      ensureApiBaseConfigured();
       try {
         return await submitViaFetch(endpoint, payload);
       } catch (error) {

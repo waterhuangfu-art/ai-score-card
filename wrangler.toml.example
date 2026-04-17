@@ -1,0 +1,12 @@
+name = "ai-score-card-api"
+main = "cloudflare-worker.mjs"
+compatibility_date = "2026-04-16"
+
+[vars]
+REPO = "waterhuangfu-art/ai-score-card"
+
+# 部署前执行：
+# 1. npm i -g wrangler
+# 2. wrangler login
+# 3. wrangler secret put GITHUB_TOKEN
+# 4. wrangler deploy

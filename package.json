@@ -1,0 +1,10 @@
+{
+  "name": "ai-score-card",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:pages": "node scripts/build-pages.mjs",
+    "start:local": "node local-server.mjs",
+    "start:public": "node start-public.mjs"
+  }
+}

@@ -1,0 +1,11 @@
+name = "ai-score-card-api"
+main = "cloudflare-worker.mjs"
+compatibility_date = "2026-04-16"
+
+[vars]
+REPO = "waterhuangfu-art/ai-score-card"
+
+[[routes]]
+pattern = "api.playforfun.life"
+custom_domain = true
+zone_name = "playforfun.life"
