@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>从经验到生意共创卡</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #eef8ff;
+      --bg-2: #fbfdff;
+      --panel: rgba(255, 255, 255, 0.94);
+      --line: #d5eaff;
+      --text: #152136;
+      --muted: #63748e;
+      --blue: #1798ff;
+      --blue-2: #5fd6ff;
+      --blue-soft: #edf8ff;
+      --blue-soft-2: #f7fbff;
+      --green: #13a474;
+      --amber: #f59e0b;
+      --shadow: 0 24px 56px rgba(61, 123, 207, 0.15);
+      --radius: 24px;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(95, 214, 255, 0.32), transparent 28%),
+        radial-gradient(circle at right 12%, rgba(23, 152, 255, 0.16), transparent 22%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      padding: 28px 18px 44px;
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .hero,
+    .section,
+    .sticky-panel,
+    .canvas-card {
+      background: var(--panel);
+      border: 1px solid rgba(213, 234, 255, 0.92);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+      gap: 18px;
+      padding: 32px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      top: -110px;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(95, 214, 255, 0.34), rgba(95, 214, 255, 0));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: 44px;
+      line-height: 1.05;
+      letter-spacing: 0;
+      margin-bottom: 14px;
+      max-width: 780px;
+    }
+
+    .hero-copy {
+      font-size: 18px;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 820px;
+    }
+
+    .hero-chips,
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-chip,
+    .meta-pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .hero-side {
+      position: relative;
+      z-index: 1;
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(23, 152, 255, 0.96), rgba(95, 214, 255, 0.86));
+      color: #fff;
+      padding: 24px;
+      min-height: 100%;
+    }
+
+    .side-label {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 12px;
+    }
+
+    .side-big {
+      font-size: 36px;
+      line-height: 1.12;
+      letter-spacing: 0;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .side-copy {
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 24px;
+    }
+
+    .section-head {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .section-kicker {
+      color: var(--blue);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 1.18;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label,
+    .field-title {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    textarea {
+      min-height: 94px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(23, 152, 255, 0.12);
+    }
+
+    .step-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, #fff, var(--blue-soft-2));
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .step-title {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .step-no {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .step-title b {
+      display: block;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .step-title p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+      margin-top: 4px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .choice {
+      position: relative;
+      display: flex;
+      min-height: 126px;
+      border: 1.5px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .choice:hover {
+      transform: translateY(-2px);
+      border-color: #a8d1ff;
+      box-shadow: 0 10px 20px rgba(23, 152, 255, 0.09);
+    }
+
+    .choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .choice-body {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .choice-body b {
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .choice-body span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .choice input:checked + .choice-body {
+      color: var(--blue);
+    }
+
+    .choice:has(input:checked) {
+      border-color: var(--blue);
+      background: linear-gradient(180deg, #fff, var(--blue-soft));
+      box-shadow: 0 12px 24px rgba(23, 152, 255, 0.14);
+    }
+
+    .canvas-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .canvas-card {
+      box-shadow: none;
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      min-height: 210px;
+    }
+
+    .canvas-card b {
+      display: block;
+      color: var(--blue);
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .canvas-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .canvas-card textarea {
+      min-height: 118px;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .gap-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .gap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .gap input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .sticky-panel {
+      position: sticky;
+      top: 20px;
+      padding: 22px;
+    }
+
+    .summary-box {
+      border: 1.5px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff, var(--blue-soft-2));
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .summary-value {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.45;
+      color: var(--text);
+      min-height: 26px;
+    }
+
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8eff9;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-2));
+      transition: width 0.18s ease;
+    }
+
+    .progress-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      min-height: 50px;
+      padding: 0 18px;
+      border-radius: 16px;
+      text-decoration: none;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      color: #fff;
+      box-shadow: 0 16px 28px rgba(23, 152, 255, 0.2);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--blue);
+      border: 1.5px solid var(--line);
+    }
+
+    .btn-danger {
+      background: #fff7ed;
+      color: #b45309;
+      border: 1.5px solid #fed7aa;
+    }
+
+    .toast {
+      display: none;
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #eefcf6;
+      border: 1px solid #b8eccf;
+      color: #0f8d5b;
+      font-size: 13px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    @media (max-width: 1080px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 820px) {
+      h1 { font-size: 34px; }
+      .hero { padding: 24px; }
+      .field-grid,
+      .field-grid.three,
+      .choice-grid,
+      .canvas-grid,
+      .gap-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 16px 12px 30px; }
+      .hero, .section, .sticky-panel { border-radius: 20px; }
+      .hero { padding: 20px 18px; }
+      h1 { font-size: 30px; }
+      .hero-copy { font-size: 16px; }
+      .side-big { font-size: 28px; }
+      .section { padding: 18px; }
+      .section-title { font-size: 24px; }
+      .choice { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">创业下午茶 · 共创工具</div>
+        <h1>从经验到生意共创卡</h1>
+        <div class="hero-copy">
+          把现场拆出来的经验、客户问题、变现切口、AI放大点和72小时行动，收束成一张可以继续验证的个人画布。
+        </div>
+        <div class="hero-chips">
+          <div class="hero-chip">经验资产</div>
+          <div class="hero-chip">客户问题</div>
+          <div class="hero-chip">变现切口</div>
+          <div class="hero-chip">AI放大点</div>
+          <div class="hero-chip">72小时验证</div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="side-label">本场主题</div>
+        <div class="side-big">把你的经验变成生意</div>
+        <div class="side-copy">
+          先填小卡，再回到九宫格画布。不要追求完美答案，只保留一个能在72小时内启动的真实动作。
+        </div>
+      </div>
+    </header>
+
+    <form id="workshopForm" class="layout">
+      <main class="main">
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">基本信息</div>
+            <div class="section-title">先标记这张卡属于谁</div>
+            <div class="section-sub">场次标签可以从链接自动带入，也可以现场手动填写。</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="name">姓名或昵称</label>
+              <input id="name" name="name" type="text" maxlength="24" placeholder="例如：黄赋 / 小李 / 小王" />
+            </div>
+            <div class="field">
+              <label for="session">场次标签</label>
+              <input id="session" name="session" type="text" maxlength="50" placeholder="例如：20260528创业下午茶" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 01</div>
+            <div class="section-title">经验资产卡</div>
+            <div class="section-sub">先不要想创业，先看你已经有什么。</div>
+          </div>
+          <div class="step-card">
+            <div class="step-title">
+              <div class="step-no">01</div>
+              <div>
+                <b>找到一条值得继续拆的经验</b>
+                <p>别人常问你、你反复解决过、你踩坑换来的判断，都可能是经验资产。</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="assetQuestions">别人最常问我的3个问题是什么？</label>
+                <textarea id="assetQuestions" name="assetQuestions"></textarea>
+              </div>
+              <div class="field">
+                <label for="assetHardThing">我反复解决过、别人觉得难的事是什么？</label>
+                <textarea id="assetHardThing" name="assetHardThing"></textarea>
+              </div>
+              <div class="field">
+                <label for="assetPitfalls">我踩过哪些坑，可以帮别人少走弯路？</label>
+                <textarea id="assetPitfalls" name="assetPitfalls"></textarea>
+              </div>
+              <div class="field">
+                <label for="assetPeople">我最懂哪一类人或哪一类客户？</label>
+                <textarea id="assetPeople" name="assetPeople"></textarea>
+              </div>
+              <div class="field full">
+                <label for="assetProof">这条经验有没有真实案例或结果证明？</label>
+                <textarea id="assetProof" name="assetProof"></textarea>
+              </div>
+              <div class="field full">
+                <label for="assetOutput">我最值得继续拆的经验是</label>
+                <input id="assetOutput" name="assetOutput" type="text" maxlength="160" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 02</div>
+            <div class="section-title">客户问题卡</div>
+            <div class="section-sub">经验不是卖给所有人，而是卖给一个具体客户。</div>
+          </div>
+          <div class="field-grid three">
+            <div class="field">
+              <label for="customerWho">客户是谁？能不能再具体一点？</label>
+              <textarea id="customerWho" name="customerWho"></textarea>
+            </div>
+            <div class="field">
+              <label for="customerScene">场景是什么？他在什么情况下最痛？</label>
+              <textarea id="customerScene" name="customerScene"></textarea>
+            </div>
+            <div class="field">
+              <label for="customerLoss">不解决会损失什么？</label>
+              <textarea id="customerLoss" name="customerLoss"></textarea>
+            </div>
+            <div class="field">
+              <label for="customerNow">现在怎么解决？</label>
+              <textarea id="customerNow" name="customerNow"></textarea>
+            </div>
+            <div class="field">
+              <label for="customerPayer">谁决定付钱？</label>
+              <textarea id="customerPayer" name="customerPayer"></textarea>
+            </div>
+            <div class="field">
+              <label for="customerValue">怎么判断值不值？</label>
+              <textarea id="customerValue" name="customerValue"></textarea>
+            </div>
+            <div class="field full">
+              <label for="customerOutput">阶段产出：我帮助谁，在什么场景下，解决什么问题？</label>
+              <input id="customerOutput" name="customerOutput" type="text" maxlength="180" placeholder="我帮助____，在____场景下，解决____问题。" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 03</div>
+            <div class="section-title">变现切口卡</div>
+            <div class="section-sub">同一条经验，可以有五种卖法。今天只选最容易启动、最可能拿到反馈的第一条路。</div>
+          </div>
+          <div class="choice-grid">
+            <label class="choice">
+              <input type="radio" name="monetizationPath" value="卖经验" />
+              <span class="choice-body"><b>卖经验</b><span>手册、咨询、训练营。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="monetizationPath" value="卖流量" />
+              <span class="choice-body"><b>卖流量</b><span>公众号、视频、直播。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="monetizationPath" value="卖流程" />
+              <span class="choice-body"><b>卖流程</b><span>标准服务、诊断、陪跑。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="monetizationPath" value="卖工具" />
+              <span class="choice-body"><b>卖工具</b><span>表单、提示词、智能体、小工具。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="monetizationPath" value="卖资源" />
+              <span class="choice-body"><b>卖资源</b><span>撮合、代理、解决方案。</span></span>
+            </label>
+          </div>
+          <div class="field-grid" style="margin-top:14px">
+            <div class="field">
+              <label for="pathReason">因为我已经有</label>
+              <textarea id="pathReason" name="pathReason"></textarea>
+            </div>
+            <div class="field">
+              <label for="firstDelivery">第一个小交付可能是</label>
+              <textarea id="firstDelivery" name="firstDelivery"></textarea>
+            </div>
+            <div class="field full">
+              <label for="pathNotChoose">暂时不选其他路径是因为</label>
+              <textarea id="pathNotChoose" name="pathNotChoose"></textarea>
+            </div>
+            <div class="field full">
+              <label for="pathOutput">阶段产出：我第一步先走什么路径，第一个交付是什么？</label>
+              <input id="pathOutput" name="pathOutput" type="text" maxlength="180" placeholder="我第一步先走____路径，第一个交付是____。" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 04</div>
+            <div class="section-title">AI放大点卡</div>
+            <div class="section-sub">AI不是工具清单，是业务动作放大器。</div>
+          </div>
+          <div class="choice-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom:14px">
+            <label class="choice">
+              <input type="radio" name="aiMode" value="省" />
+              <span class="choice-body"><b>省</b><span>降低服务交付成本。会前资料、会后纪要、复盘问题、报告框架。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="aiMode" value="扩" />
+              <span class="choice-body"><b>扩</b><span>扩大服务覆盖人数。指南、工具表、打卡流程、小课、内容矩阵。</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="aiMode" value="升" />
+              <span class="choice-body"><b>升</b><span>提高判断质量与可信度。市场研究、来源对照、反向质疑、评论分析。</span></span>
+            </label>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="aiCut">我的切口是</label>
+              <input id="aiCut" name="aiCut" type="text" maxlength="160" />
+            </div>
+            <div class="field">
+              <label for="aiCostlyStep">最耗时的一步是</label>
+              <input id="aiCostlyStep" name="aiCostlyStep" type="text" maxlength="160" />
+            </div>
+            <div class="field">
+              <label for="aiStep">AI可以介入的一步是</label>
+              <textarea id="aiStep" name="aiStep"></textarea>
+            </div>
+            <div class="field">
+              <label for="aiMetric">我判断它有效的标准是</label>
+              <textarea id="aiMetric" name="aiMetric"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Canvas</div>
+            <div class="section-title">从经验到生意画布</div>
+            <div class="section-sub">机会、流程、协作三组问题，最后只收束到一个72小时动作。</div>
+          </div>
+          <div class="canvas-grid">
+            <div class="canvas-card">
+              <div><b>1. 具体客户</b><p>谁最需要？他处在什么阶段、什么场景？</p></div>
+              <textarea id="canvasCustomer" name="canvasCustomer"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>2. 真实痛点</b><p>他现在最想解决什么问题？不解决会有什么损失？</p></div>
+              <textarea id="canvasPain" name="canvasPain"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>3. 付费信号</b><p>他是否已经为类似问题付出钱、时间或资源？</p></div>
+              <textarea id="canvasPayment" name="canvasPayment"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>4. 经验与证据</b><p>我有什么被验证过、能帮客户降低成本或提高确定性的经验？</p></div>
+              <textarea id="canvasProof" name="canvasProof"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>5. 最小可信交付</b><p>我能先交付一个什么结果，让客户看得见、能评价？</p></div>
+              <textarea id="canvasDelivery" name="canvasDelivery"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>6. 交付流程</b><p>这次服务能否沉淀成步骤、模板、清单、报告或工作流？</p></div>
+              <textarea id="canvasFlow" name="canvasFlow"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>7. AI放大点</b><p>AI帮我省、扩、还是升？具体进入哪个业务动作？</p></div>
+              <textarea id="canvasAi" name="canvasAi"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>8. 种子客户协作</b><p>谁愿意反馈、试用、共创，甚至成为案例？</p></div>
+              <textarea id="canvasSeed" name="canvasSeed"></textarea>
+            </div>
+            <div class="canvas-card">
+              <div><b>9. 伙伴与资源</b><p>我还需要谁协作？平台、工具、社群或专业伙伴是什么？</p></div>
+              <textarea id="canvasPartners" name="canvasPartners"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 05</div>
+            <div class="section-title">72小时验证行动卡</div>
+            <div class="section-sub">想法只有进入行动，才开始变成机会。</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="validationQuestion">我要验证的问题</label>
+              <textarea id="validationQuestion" name="validationQuestion"></textarea>
+            </div>
+            <div class="field">
+              <label for="validationPerson">我要找的人</label>
+              <textarea id="validationPerson" name="validationPerson"></textarea>
+            </div>
+            <div class="field">
+              <label for="validationDelivery">我要给他的最小可信交付</label>
+              <textarea id="validationDelivery" name="validationDelivery"></textarea>
+            </div>
+            <div class="field">
+              <label for="validationTime">我会在什么时候完成</label>
+              <textarea id="validationTime" name="validationTime"></textarea>
+            </div>
+            <div class="field full">
+              <label for="validationMetric">我判断这个行动有效的标准</label>
+              <textarea id="validationMetric" name="validationMetric"></textarea>
+            </div>
+            <div class="field full">
+              <label for="validationCommitment">一句话行动承诺</label>
+              <input id="validationCommitment" name="validationCommitment" type="text" maxlength="220" placeholder="72小时内，我会找____，验证____。" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-kicker">Card 06</div>
+            <div class="section-title">个人总结卡</div>
+            <div class="section-sub">这张卡不需要公开，不需要上墙，只写给自己。</div>
+          </div>
+          <div class="field-grid">
+            <div class="field full">
+              <label for="reflectionFeeling">今天我最大的感触是</label>
+              <textarea id="reflectionFeeling" name="reflectionFeeling"></textarea>
+            </div>
+            <div class="field">
+              <label for="takeawayAsset">关于我的经验</label>
+              <textarea id="takeawayAsset" name="takeawayAsset"></textarea>
+            </div>
+            <div class="field">
+              <label for="takeawayCustomer">关于我的客户 / 问题</label>
+              <textarea id="takeawayCustomer" name="takeawayCustomer"></textarea>
+            </div>
+            <div class="field full">
+              <label for="takeawayDelivery">关于可信交付 / AI放大</label>
+              <textarea id="takeawayDelivery" name="takeawayDelivery"></textarea>
+            </div>
+            <div class="field full">
+              <div class="field-title">今天我意识到，自己最需要补的一块是</div>
+              <div class="gap-list">
+                <label class="gap"><input type="checkbox" name="growthGap" value="机会不够清晰" />机会不够清晰</label>
+                <label class="gap"><input type="checkbox" name="growthGap" value="流程还没成型" />流程还没成型</label>
+                <label class="gap"><input type="checkbox" name="growthGap" value="协作还没打开" />协作还没打开</label>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="reflectionAction">回去后，我先做一个行动</label>
+              <textarea id="reflectionAction" name="reflectionAction"></textarea>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside>
+        <div class="sticky-panel">
+          <div class="section-kicker">我的共创摘要</div>
+          <div class="summary-box">
+            <div class="summary-label">经验资产</div>
+            <div class="summary-value" id="summaryAsset">待填写</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">客户问题</div>
+            <div class="summary-value" id="summaryCustomer">待填写</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">变现切口</div>
+            <div class="summary-value" id="summaryPath">待选择</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">AI放大点</div>
+            <div class="summary-value" id="summaryAi">待选择</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">72小时行动</div>
+            <div class="summary-value" id="summaryAction">待填写</div>
+          </div>
+          <div class="progress"><span id="progressBar"></span></div>
+          <div class="progress-copy" id="progressCopy">已填写 0 / 43 项</div>
+          <div class="actions">
+            <button class="btn btn-primary" type="button" id="copyBtn">复制结果</button>
+            <button class="btn btn-secondary" type="button" id="downloadBtn">下载文本</button>
+            <a class="btn btn-secondary" href="./index.html">返回首页</a>
+            <button class="btn btn-danger" type="button" id="clearBtn">清空本页</button>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </aside>
+    </form>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'business-workshop-card-v1';
+    const form = document.getElementById('workshopForm');
+    const fields = Array.from(form.querySelectorAll('input, textarea, select'));
+    const pathRadios = Array.from(form.querySelectorAll('input[name="monetizationPath"]'));
+    const aiModeRadios = Array.from(form.querySelectorAll('input[name="aiMode"]'));
+    const gapChecks = Array.from(form.querySelectorAll('input[name="growthGap"]'));
+    const toast = document.getElementById('toast');
+
+    function getRadioValue(name) {
+      return form.querySelector(`input[name="${name}"]:checked`)?.value || '';
+    }
+
+    function getCheckedValues(name) {
+      return Array.from(form.querySelectorAll(`input[name="${name}"]:checked`)).map((item) => item.value);
+    }
+
+    function getValue(id) {
+      return document.getElementById(id)?.value.trim() || '';
+    }
+
+    function setValue(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.value = value || '';
+    }
+
+    function readFormData() {
+      const data = {};
+      for (const field of fields) {
+        if (field.type === 'radio') continue;
+        if (field.type === 'checkbox') continue;
+        if (field.id) data[field.id] = field.value;
+      }
+      data.monetizationPath = getRadioValue('monetizationPath');
+      data.aiMode = getRadioValue('aiMode');
+      data.growthGap = getCheckedValues('growthGap');
+      return data;
+    }
+
+    function applyFormData(data) {
+      for (const [key, value] of Object.entries(data || {})) {
+        if (key === 'monetizationPath' || key === 'aiMode' || key === 'growthGap') continue;
+        setValue(key, value);
+      }
+      if (data?.monetizationPath) {
+        const radio = form.querySelector(`input[name="monetizationPath"][value="${CSS.escape(data.monetizationPath)}"]`);
+        if (radio) radio.checked = true;
+      }
+      if (data?.aiMode) {
+        const radio = form.querySelector(`input[name="aiMode"][value="${CSS.escape(data.aiMode)}"]`);
+        if (radio) radio.checked = true;
+      }
+      for (const checkbox of gapChecks) {
+        checkbox.checked = Array.isArray(data?.growthGap) && data.growthGap.includes(checkbox.value);
+      }
+    }
+
+    function loadInitialData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        applyFormData(saved);
+      } catch {
+        applyFormData({});
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session');
+      if (session && !getValue('session')) {
+        setValue('session', session);
+      }
+    }
+
+    function saveFormData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(readFormData()));
+      } catch {
+        // Local persistence is optional.
+      }
+    }
+
+    function updateSummary() {
+      const totalFields = fields.filter((field) => field.type !== 'radio' && field.type !== 'checkbox').length + 3;
+      let filled = fields.filter((field) => {
+        if (field.type === 'radio' || field.type === 'checkbox') return false;
+        return field.value.trim();
+      }).length;
+      if (getRadioValue('monetizationPath')) filled += 1;
+      if (getRadioValue('aiMode')) filled += 1;
+      if (getCheckedValues('growthGap').length) filled += 1;
+
+      document.getElementById('summaryAsset').textContent = getValue('assetOutput') || getValue('canvasProof') || '待填写';
+      document.getElementById('summaryCustomer').textContent = getValue('customerOutput') || getValue('canvasCustomer') || '待填写';
+      document.getElementById('summaryPath').textContent = getRadioValue('monetizationPath') || '待选择';
+      document.getElementById('summaryAi').textContent = getRadioValue('aiMode') || '待选择';
+      document.getElementById('summaryAction').textContent = getValue('validationCommitment') || getValue('reflectionAction') || '待填写';
+      document.getElementById('progressBar').style.width = `${Math.round((filled / totalFields) * 100)}%`;
+      document.getElementById('progressCopy').textContent = `已填写 ${filled} / ${totalFields} 项`;
+    }
+
+    function line(label, value) {
+      return `- ${label}：${value || '（未填写）'}`;
+    }
+
+    function section(title, rows) {
+      return [`## ${title}`, ...rows, ''].join('\n');
+    }
+
+    function buildMarkdown() {
+      const data = readFormData();
+      return [
+        '# 从经验到生意共创卡',
+        '',
+        section('基本信息', [
+          line('姓名', data.name),
+          line('场次', data.session)
+        ]),
+        section('经验资产卡', [
+          line('别人最常问我的3个问题', data.assetQuestions),
+          line('我反复解决过、别人觉得难的事', data.assetHardThing),
+          line('我踩过的坑', data.assetPitfalls),
+          line('我最懂的人或客户', data.assetPeople),
+          line('真实案例或结果证明', data.assetProof),
+          line('最值得继续拆的经验', data.assetOutput)
+        ]),
+        section('客户问题卡', [
+          line('客户是谁', data.customerWho),
+          line('场景是什么', data.customerScene),
+          line('不解决会损失什么', data.customerLoss),
+          line('现在怎么解决', data.customerNow),
+          line('谁决定付钱', data.customerPayer),
+          line('怎么判断值不值', data.customerValue),
+          line('阶段产出', data.customerOutput)
+        ]),
+        section('变现切口卡', [
+          line('第一步路径', data.monetizationPath),
+          line('因为我已经有', data.pathReason),
+          line('第一个小交付', data.firstDelivery),
+          line('暂时不选其他路径', data.pathNotChoose),
+          line('阶段产出', data.pathOutput)
+        ]),
+        section('AI放大点卡', [
+          line('我的切口', data.aiCut),
+          line('最耗时的一步', data.aiCostlyStep),
+          line('AI可以介入的一步', data.aiStep),
+          line('省 / 扩 / 升', data.aiMode),
+          line('有效标准', data.aiMetric)
+        ]),
+        section('从经验到生意画布', [
+          line('1. 具体客户', data.canvasCustomer),
+          line('2. 真实痛点', data.canvasPain),
+          line('3. 付费信号', data.canvasPayment),
+          line('4. 经验与证据', data.canvasProof),
+          line('5. 最小可信交付', data.canvasDelivery),
+          line('6. 交付流程', data.canvasFlow),
+          line('7. AI放大点', data.canvasAi),
+          line('8. 种子客户协作', data.canvasSeed),
+          line('9. 伙伴与资源', data.canvasPartners)
+        ]),
+        section('72小时验证行动卡', [
+          line('我要验证的问题', data.validationQuestion),
+          line('我要找的人', data.validationPerson),
+          line('我要给他的最小可信交付', data.validationDelivery),
+          line('完成时间', data.validationTime),
+          line('有效标准', data.validationMetric),
+          line('一句话行动承诺', data.validationCommitment)
+        ]),
+        section('个人总结卡', [
+          line('今天最大的感触', data.reflectionFeeling),
+          line('关于我的经验', data.takeawayAsset),
+          line('关于我的客户 / 问题', data.takeawayCustomer),
+          line('关于可信交付 / AI放大', data.takeawayDelivery),
+          line('最需要补的一块', (data.growthGap || []).join('、')),
+          line('回去后先做的行动', data.reflectionAction)
+        ])
+      ].join('\n');
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    async function copyMarkdown() {
+      const text = buildMarkdown();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      showToast('已复制共创结果。');
+    }
+
+    function downloadMarkdown() {
+      const name = getValue('name') || '未命名';
+      const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+      const blob = new Blob([buildMarkdown()], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `从经验到生意共创卡-${name}-${date}.md`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('已生成下载文件。');
+    }
+
+    function clearForm() {
+      if (!window.confirm('确认清空本页填写内容？')) return;
+      for (const field of fields) {
+        if (field.type === 'radio' || field.type === 'checkbox') {
+          field.checked = false;
+        } else {
+          field.value = '';
+        }
+      }
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore storage failures.
+      }
+      updateSummary();
+      showToast('已清空。');
+    }
+
+    form.addEventListener('input', () => {
+      saveFormData();
+      updateSummary();
+    });
+    form.addEventListener('change', () => {
+      saveFormData();
+      updateSummary();
+    });
+    document.getElementById('copyBtn').addEventListener('click', copyMarkdown);
+    document.getElementById('downloadBtn').addEventListener('click', downloadMarkdown);
+    document.getElementById('clearBtn').addEventListener('click', clearForm);
+
+    loadInitialData();
+    updateSummary();
+  </script>
+</body>
+</html>

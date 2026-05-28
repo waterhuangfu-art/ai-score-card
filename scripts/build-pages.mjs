@@ -8,6 +8,7 @@ const staticFiles = [
   'index.html',
   'ai.html',
   'opc.html',
+  'business.html',
   'admin.html',
   'admin-ai.html',
   'admin-opc.html',

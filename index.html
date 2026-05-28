@@ -84,7 +84,7 @@
     h1 {
       font-size: 44px;
       line-height: 1.05;
-      letter-spacing: -0.05em;
+      letter-spacing: 0;
       margin-bottom: 14px;
       max-width: 760px;
     }
@@ -114,7 +114,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
       margin-bottom: 18px;
     }
@@ -152,7 +152,7 @@
     .card h2 {
       font-size: 30px;
       line-height: 1.15;
-      letter-spacing: -0.04em;
+      letter-spacing: 0;
       margin-bottom: 12px;
     }
 
@@ -263,7 +263,7 @@
       <div class="eyebrow">评分卡中心 · Git 入口</div>
       <h1>现场所有评分卡，从这一页统一进入</h1>
       <div class="hero-copy">
-        以后新的评分卡都继续挂在这里。当前先保留两张已经可用的工具：之前做过的 AI 含量评分卡，以及今天新增的一人公司准备度自评卡。
+        以后新的评分卡和共创工具都继续挂在这里。当前保留 AI 含量评分卡、一人公司准备度自评卡，以及“从经验到生意”共创卡。
       </div>
       <div class="hero-chips">
         <div class="hero-chip">手机端适配</div>
@@ -307,11 +307,28 @@
           <a class="btn btn-primary" href="./opc.html">开始填写</a>
         </div>
       </article>
+
+      <article class="card">
+        <div class="card-top">
+          <div class="card-kicker">Workshop Card 03</div>
+          <div class="card-badge">共创画布</div>
+        </div>
+        <h2>从经验到生意共创卡</h2>
+        <p>适合今天下午茶现场使用，把经验资产、客户问题、变现切口、AI放大点和72小时行动收束成一张个人画布。</p>
+        <div class="meta">
+          <span>6 张工作卡</span>
+          <span>九宫格画布</span>
+          <span>可复制下载</span>
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="./business.html">开始填写</a>
+        </div>
+      </article>
     </section>
 
     <section class="note">
       <div class="note-title">使用说明</div>
-      <p>现场使用时，直接打开当前站点域名即可。区分场次时，可以在链接后追加 <code>?session=20260415创业下午茶</code>。这一页只给填写人使用，后台是单独链接 <code>/admin.html</code>，不在这里展示。</p>
+      <p>现场使用时，直接打开当前站点域名即可。区分场次时，可以在链接后追加 <code>?session=20260528创业下午茶</code>。评分卡会写入后台；共创卡先保存在填写人的浏览器本地，可复制或下载。</p>
     </section>
   </div>
 </body>

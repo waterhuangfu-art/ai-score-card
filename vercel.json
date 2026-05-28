@@ -4,6 +4,7 @@
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/ai", "dest": "/ai.html" },
     { "src": "/opc", "dest": "/opc.html" },
+    { "src": "/business", "dest": "/business.html" },
     { "src": "/admin", "dest": "/admin.html" },
     { "src": "/admin-ai", "dest": "/admin-ai.html" },
     { "src": "/admin-opc", "dest": "/admin-opc.html" }
