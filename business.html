@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>从经验到生意共创卡</title>
+  <script src="./api-config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -924,6 +925,7 @@
           <div class="progress"><span id="progressBar"></span></div>
           <div class="progress-copy" id="progressCopy">已填写 0 / 43 项</div>
           <div class="actions">
+            <button class="btn btn-primary" type="button" id="submitBtn">提交到后台</button>
             <button class="btn btn-primary" type="button" id="copyBtn">复制结果</button>
             <button class="btn btn-secondary" type="button" id="downloadBtn">下载文本</button>
             <a class="btn btn-secondary" href="./index.html">返回首页</a>
@@ -943,6 +945,9 @@
     const aiModeRadios = Array.from(form.querySelectorAll('input[name="aiMode"]'));
     const gapChecks = Array.from(form.querySelectorAll('input[name="growthGap"]'));
     const toast = document.getElementById('toast');
+    const API_BASE = typeof window.resolveScoreCardApiBase === 'function'
+      ? window.resolveScoreCardApiBase()
+      : window.location.origin;
 
     function getRadioValue(name) {
       return form.querySelector(`input[name="${name}"]:checked`)?.value || '';
@@ -1119,6 +1124,36 @@
       showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 2400);
     }
 
+    async function submitToBackend() {
+      const data = readFormData();
+      if (!data.name || !String(data.name).trim()) {
+        showToast('请先填写姓名或昵称。');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '提交中...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/submit-business`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || '提交失败');
+        }
+        showToast(`已提交到后台，记录 #${result.issueNumber}。`);
+      } catch (error) {
+        showToast(error.message || '提交失败，请稍后再试。');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '提交到后台';
+      }
+    }
+
     async function copyMarkdown() {
       const text = buildMarkdown();
       try {
@@ -1177,6 +1212,7 @@
     });
     document.getElementById('copyBtn').addEventListener('click', copyMarkdown);
     document.getElementById('downloadBtn').addEventListener('click', downloadMarkdown);
+    document.getElementById('submitBtn').addEventListener('click', submitToBackend);
     document.getElementById('clearBtn').addEventListener('click', clearForm);
 
     loadInitialData();

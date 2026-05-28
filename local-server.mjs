@@ -10,6 +10,7 @@ const REPO = process.env.REPO || 'waterhuangfu-art/ai-score-card';
 
 const aiRateLimit = new Map();
 const opcRateLimit = new Map();
+const businessRateLimit = new Map();
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -254,6 +255,12 @@ function getSectionList(body, title) {
     .filter(Boolean);
 }
 
+function getBulletValue(body, label) {
+  const re = new RegExp(`^-\\s*${escapeRegExp(label)}\\s*[：:]\\s*(.*)$`, 'm');
+  const match = String(body || '').match(re);
+  return match ? match[1].trim() : '';
+}
+
 function getDimensionReason(body, label) {
   const re = new RegExp(`\\|\\s*${escapeRegExp(label)}\\s*\\|\\s*.+?\\|\\s*(.+?)\\s*\\|`);
   const match = String(body || '').match(re);
@@ -310,6 +317,24 @@ function parseOpcIssue(issue) {
     reasonBrand: getDimensionReason(body, '个人品牌 / 流量'),
     reasonFinance: getDimensionReason(body, '财务准备度'),
     breakthroughs: getSectionList(body, '最想突破'),
+    createdAt: issue.created_at
+  };
+}
+
+function parseBusinessIssue(issue) {
+  const body = issue.body || '';
+
+  return {
+    number: issue.number,
+    url: issue.html_url,
+    name: getBulletValue(body, '姓名'),
+    session: getBulletValue(body, '场次'),
+    assetOutput: getBulletValue(body, '最值得继续拆的经验'),
+    customerOutput: getBulletValue(body, '阶段产出'),
+    monetizationPath: getBulletValue(body, '第一步路径'),
+    aiMode: getBulletValue(body, '省 / 扩 / 升'),
+    validationCommitment: getBulletValue(body, '一句话行动承诺'),
+    growthGap: getBulletValue(body, '最需要补的一块'),
     createdAt: issue.created_at
   };
 }
@@ -393,6 +418,27 @@ async function handleResultsOpc(req, res, url) {
       { key: 'brand', label: '个人品牌 / 流量', short: '品' },
       { key: 'finance', label: '财务准备度', short: '财' }
     ], session));
+  } catch (error) {
+    return sendJson(res, 500, { error: error.message || '获取后台数据失败' });
+  }
+}
+
+async function handleResultsBusiness(req, res, url) {
+  if (!GITHUB_TOKEN) {
+    return sendJson(res, 500, { error: '本机未找到 GitHub Token，请先执行 gh auth login' });
+  }
+
+  const session = cleanText(url.searchParams.get('session'), 50);
+
+  try {
+    const issues = await listIssues('business-workshop-card');
+    const records = issues
+      .filter((issue) => issue.title && issue.title.startsWith('[共创卡]'))
+      .map(parseBusinessIssue)
+      .filter((record) => !session || record.session === session)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return sendJson(res, 200, { session, count: records.length, records });
   } catch (error) {
     return sendJson(res, 500, { error: error.message || '获取后台数据失败' });
   }
@@ -526,6 +572,97 @@ ${breakthroughs.length ? breakthroughs.map((item) => `- ${item}`).join('\n') : '
   };
 }
 
+function cleanBusinessText(payload, key, maxLength = 800) {
+  return cleanText(payload?.[key], maxLength) || '（未填写）';
+}
+
+function buildBusinessRecord(payload) {
+  const name = cleanText(payload?.name, 24);
+  if (!name) throw new Error('姓名不能为空');
+
+  const session = cleanText(payload?.session, 50);
+  const path = cleanText(payload?.monetizationPath, 40);
+  const aiMode = cleanText(payload?.aiMode, 20);
+  const growthGap = Array.isArray(payload?.growthGap)
+    ? payload.growthGap.map((item) => cleanText(item, 40)).filter(Boolean).join('、')
+    : '';
+
+  const section = (title, rows) => `## ${title}\n${rows.map(([label, key]) => `- ${label}：${cleanBusinessText(payload, key)}`).join('\n')}`;
+
+  return {
+    title: `[共创卡] ${name} · ${path || '未选路径'} · ${aiMode || '未选AI放大点'}`,
+    labels: ['business-workshop-card'].concat(session ? [session] : []),
+    body: `## 基本信息
+- 姓名：${name}
+- 场次：${session || '—'}
+
+${section('经验资产卡', [
+  ['别人最常问我的3个问题', 'assetQuestions'],
+  ['我反复解决过、别人觉得难的事', 'assetHardThing'],
+  ['我踩过的坑', 'assetPitfalls'],
+  ['我最懂的人或客户', 'assetPeople'],
+  ['真实案例或结果证明', 'assetProof'],
+  ['最值得继续拆的经验', 'assetOutput']
+])}
+
+${section('客户问题卡', [
+  ['客户是谁', 'customerWho'],
+  ['场景是什么', 'customerScene'],
+  ['不解决会损失什么', 'customerLoss'],
+  ['现在怎么解决', 'customerNow'],
+  ['谁决定付钱', 'customerPayer'],
+  ['怎么判断值不值', 'customerValue'],
+  ['阶段产出', 'customerOutput']
+])}
+
+## 变现切口卡
+- 第一步路径：${path || '（未填写）'}
+- 因为我已经有：${cleanBusinessText(payload, 'pathReason')}
+- 第一个小交付：${cleanBusinessText(payload, 'firstDelivery')}
+- 暂时不选其他路径：${cleanBusinessText(payload, 'pathNotChoose')}
+- 阶段产出：${cleanBusinessText(payload, 'pathOutput')}
+
+## AI放大点卡
+- 我的切口：${cleanBusinessText(payload, 'aiCut')}
+- 最耗时的一步：${cleanBusinessText(payload, 'aiCostlyStep')}
+- AI可以介入的一步：${cleanBusinessText(payload, 'aiStep')}
+- 省 / 扩 / 升：${aiMode || '（未填写）'}
+- 有效标准：${cleanBusinessText(payload, 'aiMetric')}
+
+${section('从经验到生意画布', [
+  ['1. 具体客户', 'canvasCustomer'],
+  ['2. 真实痛点', 'canvasPain'],
+  ['3. 付费信号', 'canvasPayment'],
+  ['4. 经验与证据', 'canvasProof'],
+  ['5. 最小可信交付', 'canvasDelivery'],
+  ['6. 交付流程', 'canvasFlow'],
+  ['7. AI放大点', 'canvasAi'],
+  ['8. 种子客户协作', 'canvasSeed'],
+  ['9. 伙伴与资源', 'canvasPartners']
+])}
+
+${section('72小时验证行动卡', [
+  ['我要验证的问题', 'validationQuestion'],
+  ['我要找的人', 'validationPerson'],
+  ['我要给他的最小可信交付', 'validationDelivery'],
+  ['完成时间', 'validationTime'],
+  ['有效标准', 'validationMetric'],
+  ['一句话行动承诺', 'validationCommitment']
+])}
+
+## 个人总结卡
+- 今天最大的感触：${cleanBusinessText(payload, 'reflectionFeeling')}
+- 关于我的经验：${cleanBusinessText(payload, 'takeawayAsset')}
+- 关于我的客户 / 问题：${cleanBusinessText(payload, 'takeawayCustomer')}
+- 关于可信交付 / AI放大：${cleanBusinessText(payload, 'takeawayDelivery')}
+- 最需要补的一块：${growthGap || '（未填写）'}
+- 回去后先做的行动：${cleanBusinessText(payload, 'reflectionAction')}
+
+---
+*更新时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}*`
+  };
+}
+
 async function handleSubmitAi(req, res, url) {
   let payload;
   try {
@@ -560,6 +697,43 @@ async function handleSubmitAi(req, res, url) {
     });
   } catch (error) {
     return respond(res, req, url, payload, 'ai-submit-result', 500, {
+      success: false,
+      error: error.message || '提交失败'
+    });
+  }
+}
+
+async function handleSubmitBusiness(req, res, url) {
+  let payload;
+  try {
+    payload = await readBody(req);
+  } catch {
+    return respond(res, req, url, {}, 'business-submit-result', 400, { success: false, error: '请求格式错误' });
+  }
+
+  if (!GITHUB_TOKEN) {
+    return respond(res, req, url, payload, 'business-submit-result', 500, { success: false, error: '本机未找到 GitHub Token，请先执行 gh auth login' });
+  }
+
+  const ip = getClientIp(req);
+  if (isRateLimited(businessRateLimit, ip)) {
+    return respond(res, req, url, payload, 'business-submit-result', 429, { success: false, error: '提交太频繁，请稍后再试' });
+  }
+
+  try {
+    const result = buildBusinessRecord(payload);
+    await ensureLabel('business-workshop-card', '0ea5e9');
+    for (const label of result.labels.slice(1)) {
+      await ensureLabel(label, '2563eb');
+    }
+
+    const issue = await createIssue(result.title, result.body, result.labels);
+    return respond(res, req, url, payload, 'business-submit-result', 200, {
+      success: true,
+      issueNumber: issue.number
+    });
+  } catch (error) {
+    return respond(res, req, url, payload, 'business-submit-result', 500, {
       success: false,
       error: error.message || '提交失败'
     });
@@ -711,6 +885,10 @@ const server = http.createServer(async (req, res) => {
     return handleSubmitOpc(req, res, url);
   }
 
+  if (req.method === 'POST' && url.pathname === '/api/submit-business') {
+    return handleSubmitBusiness(req, res, url);
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/manage-ai') {
     return handleManage(req, res, buildAiRecord, '[评分]', 'ai-score-card', {
       '尝鲜期': 'f59e0b',
@@ -735,6 +913,10 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/api/results-opc') {
     return handleResultsOpc(req, res, url);
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/results-business') {
+    return handleResultsBusiness(req, res, url);
   }
 
   if (req.method === 'GET') {

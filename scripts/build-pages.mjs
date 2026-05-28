@@ -12,6 +12,7 @@ const staticFiles = [
   'admin.html',
   'admin-ai.html',
   'admin-opc.html',
+  'admin-business.html',
   'api-config.js'
 ];
 
